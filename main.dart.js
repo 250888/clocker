@@ -97486,7 +97486,7 @@ $ie3:1}
 A.akr.prototype={}
 A.akq.prototype={}
 A.aAN.prototype={
-$0(){var s={aBi:function(){return""},execute:function(a,b){return Promise.resolve([])},insert:function(a,b){return Promise.resolve(0)},query:function(a,b){return Promise.resolve([])},update:function(a,b,c){return Promise.resolve(0)},delete:function(a,b){return Promise.resolve(0)},close:function(){},rawQuery:function(a,b){return Promise.resolve([])},rawInsert:function(a,b,c){return Promise.resolve(0)},rawUpdate:function(a,b,c){return Promise.resolve(0)},rawDelete:function(a,b){return Promise.resolve(0)},transaction:function(a,b){return Promise.resolve()},batch:function(){return{commit:function(){return Promise.resolve()},noResult:function(a){},insert:function(a,b){return this},update:function(a,b){return this},delete:function(a,b){return this}}}},version:function(){return 1}};s.getVersion=Promise.resolve(1);s.getPath=Promise.resolve("/dev/null");return s},
+$0(){return{aBi:function(){return""},execute:function(){return Promise.resolve([])},insert:function(){return Promise.resolve(0)},query:function(){return Promise.resolve([])},update:function(){return Promise.resolve(0)},delete:function(){return Promise.resolve(0)},close:function(){},rawQuery:function(){return Promise.resolve([])},rawInsert:function(){return Promise.resolve(0)},rawUpdate:function(){return Promise.resolve(0)},rawDelete:function(){return Promise.resolve(0)},transaction:function(){return Promise.resolve()},batch:function(){return{commit:function(){return Promise.resolve()}}},getVersion:function(){return Promise.resolve(1)},getPath:function(){return Promise.resolve("")}}},
 $S:231}
 A.and.prototype={}
 A.ane.prototype={}
