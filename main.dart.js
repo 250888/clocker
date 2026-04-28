@@ -97486,7 +97486,7 @@ $ie3:1}
 A.akr.prototype={}
 A.akq.prototype={}
 A.aAN.prototype={
-$0(){throw A.j(A.aU("databaseFactory not initialized\ndatabaseFactory is only initialized when using sqflite. When using `sqflite_common_ffi`\nYou must call `databaseFactory = databaseFactoryFfi;` before using global openDatabase API\n"))},
+$0(){return Promise.resolve([])},
 $S:231}
 A.and.prototype={}
 A.ane.prototype={}

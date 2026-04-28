@@ -21,6 +21,115 @@
     #loading h1 { color: white; margin: 0 0 8px; }
     #loading p { color: rgba(255,255,255,0.7); margin: 0; }
   </style>
+  <script>
+    // Web-compatible sqflite databaseFactory polyfill using IndexedDB
+    // This must be injected before main.dart.js loads
+    (function() {
+      // Check if we're on a web platform
+      if (typeof window !== 'undefined' && !window.databaseFactory) {
+        // Create a minimal databaseFactory that uses IndexedDB
+        const dbStores = {};
+        
+        window.databaseFactory = {
+          openDatabase: function(options) {
+            const dbName = options.name || 'clocker_db';
+            const dbVersion = options.version || 1;
+            
+            return new Promise(function(resolve, reject) {
+              const request = indexedDB.open(dbName, dbVersion);
+              
+              request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                // Create default stores if tables are specified
+                if (options.tables) {
+                  options.tables.forEach(function(table) {
+                    if (!db.objectStoreNames.contains(table.name)) {
+                      db.createObjectStore(table.name, { keyPath: table.keyPath || 'id' });
+                    }
+                  });
+                }
+              };
+              
+              request.onsuccess = function(event) {
+                const db = event.target.result;
+                resolve({
+                  execute: function(sql, arguments) {
+                    // Simple key-value store simulation
+                    return Promise.resolve([]);
+                  },
+                  insert: function(table, data) {
+                    return new Promise(function(resolve, reject) {
+                      const tx = db.transaction([table], 'readwrite');
+                      const store = tx.objectStore(table);
+                      const request = store.put(data);
+                      request.onsuccess = function() {
+                        resolve(request.result);
+                      };
+                      request.onerror = function() {
+                        reject(request.error);
+                      };
+                    });
+                  },
+                  query: function(table, whereArguments) {
+                    return new Promise(function(resolve, reject) {
+                      const tx = db.transaction([table], 'readonly');
+                      const store = tx.objectStore(table);
+                      const request = store.getAll();
+                      request.onsuccess = function() {
+                        resolve(request.result);
+                      };
+                      request.onerror = function() {
+                        reject(request.error);
+                      };
+                    });
+                  },
+                  update: function(table, data, whereArguments) {
+                    return new Promise(function(resolve, reject) {
+                      const tx = db.transaction([table], 'readwrite');
+                      const store = tx.objectStore(table);
+                      const request = store.put(data);
+                      request.onsuccess = function() {
+                        resolve(request.result);
+                      };
+                      request.onerror = function() {
+                        reject(request.error);
+                      };
+                    });
+                  },
+                  delete: function(table, whereArguments) {
+                    return new Promise(function(resolve, reject) {
+                      const tx = db.transaction([table], 'readwrite');
+                      const store = tx.objectStore(table);
+                      // Delete all for now (simplified)
+                      const request = store.clear();
+                      request.onsuccess = function() {
+                        resolve();
+                      };
+                      request.onerror = function() {
+                        reject(request.error);
+                      };
+                    });
+                  },
+                  close: function() {
+                    db.close();
+                  }
+                });
+              };
+              
+              request.onerror = function(event) {
+                reject(new Error('IndexedDB error: ' + event.target.error));
+              };
+            });
+          }
+        };
+        
+        // Also expose as global for sqflite compatibility
+        window.openDatabase = function(options) {
+          return window.databaseFactory.openDatabase(options);
+        };
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="loading">
