@@ -1,141 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <base href="/clocker/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Clocker - 用狭义相对论，根治拖延症">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Clocker - 用狭义相对论，根治拖延症。你的行动速度，决定你的时间流速。">
+  <meta name="keywords" content="Clocker, 自律, 拖延症, 番茄钟, 专注, 时间管理, 相对论">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clocker">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
   <link rel="icon" type="image/png" href="favicon.png"/>
-  <title>Clocker</title>
+
+  <title>Clocker - 用狭义相对论，根治拖延症</title>
+  <link rel="manifest" href="manifest.json">
+
   <style>
-    body { margin: 0; background: #0A0A1A; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0A0A1A;
+    }
     #loading {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #6C5CE7, #00CEC9);
-      font-family: sans-serif;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #6C5CE7 0%, #A29BFE 50%, #00CEC9 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    #loading h1 { color: white; margin: 0 0 8px; }
-    #loading p { color: rgba(255,255,255,0.7); margin: 0; }
+    #loading .logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.6s ease-out;
+    }
+    #loading .title {
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      animation: fadeIn 0.6s ease-out 0.1s both;
+    }
+    #loading .subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.6s ease-out 0.2s both;
+    }
+    #loading .slogan {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      animation: fadeIn 0.6s ease-out 0.3s both;
+    }
+    #loading .progress {
+      margin-top: 32px;
+      width: 160px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      animation: fadeIn 0.6s ease-out 0.4s both;
+    }
+    #loading .progress-bar {
+      height: 100%;
+      background: white;
+      border-radius: 2px;
+      animation: progress 2s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes progress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
   </style>
-  <script>
-    // Web-compatible sqflite databaseFactory polyfill using IndexedDB
-    // This must be injected before main.dart.js loads
-    (function() {
-      // Check if we're on a web platform
-      if (typeof window !== 'undefined' && !window.databaseFactory) {
-        // Create a minimal databaseFactory that uses IndexedDB
-        const dbStores = {};
-        
-        window.databaseFactory = {
-          openDatabase: function(options) {
-            const dbName = options.name || 'clocker_db';
-            const dbVersion = options.version || 1;
-            
-            return new Promise(function(resolve, reject) {
-              const request = indexedDB.open(dbName, dbVersion);
-              
-              request.onupgradeneeded = function(event) {
-                const db = event.target.result;
-                // Create default stores if tables are specified
-                if (options.tables) {
-                  options.tables.forEach(function(table) {
-                    if (!db.objectStoreNames.contains(table.name)) {
-                      db.createObjectStore(table.name, { keyPath: table.keyPath || 'id' });
-                    }
-                  });
-                }
-              };
-              
-              request.onsuccess = function(event) {
-                const db = event.target.result;
-                resolve({
-                  execute: function(sql, arguments) {
-                    // Simple key-value store simulation
-                    return Promise.resolve([]);
-                  },
-                  insert: function(table, data) {
-                    return new Promise(function(resolve, reject) {
-                      const tx = db.transaction([table], 'readwrite');
-                      const store = tx.objectStore(table);
-                      const request = store.put(data);
-                      request.onsuccess = function() {
-                        resolve(request.result);
-                      };
-                      request.onerror = function() {
-                        reject(request.error);
-                      };
-                    });
-                  },
-                  query: function(table, whereArguments) {
-                    return new Promise(function(resolve, reject) {
-                      const tx = db.transaction([table], 'readonly');
-                      const store = tx.objectStore(table);
-                      const request = store.getAll();
-                      request.onsuccess = function() {
-                        resolve(request.result);
-                      };
-                      request.onerror = function() {
-                        reject(request.error);
-                      };
-                    });
-                  },
-                  update: function(table, data, whereArguments) {
-                    return new Promise(function(resolve, reject) {
-                      const tx = db.transaction([table], 'readwrite');
-                      const store = tx.objectStore(table);
-                      const request = store.put(data);
-                      request.onsuccess = function() {
-                        resolve(request.result);
-                      };
-                      request.onerror = function() {
-                        reject(request.error);
-                      };
-                    });
-                  },
-                  delete: function(table, whereArguments) {
-                    return new Promise(function(resolve, reject) {
-                      const tx = db.transaction([table], 'readwrite');
-                      const store = tx.objectStore(table);
-                      // Delete all for now (simplified)
-                      const request = store.clear();
-                      request.onsuccess = function() {
-                        resolve();
-                      };
-                      request.onerror = function() {
-                        reject(request.error);
-                      };
-                    });
-                  },
-                  close: function() {
-                    db.close();
-                  }
-                });
-              };
-              
-              request.onerror = function(event) {
-                reject(new Error('IndexedDB error: ' + event.target.error));
-              };
-            });
-          }
-        };
-        
-        // Also expose as global for sqflite compatibility
-        window.openDatabase = function(options) {
-          return window.databaseFactory.openDatabase(options);
-        };
-      }
-    })();
-  </script>
 </head>
 <body>
   <div id="loading">
-    <h1>Clocker</h1>
-    <p>Loading...</p>
+    <div class="logo">⏰</div>
+    <div class="title">Clocker</div>
+    <div class="subtitle">你才是钟</div>
+    <div class="slogan">你的行动速度，决定你的时间流速</div>
+    <div class="progress">
+      <div class="progress-bar"></div>
+    </div>
   </div>
-  <script src="main.dart.js" type="application/javascript"></script>
+
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
