@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'screen_monitor_service.dart';
-import 'screen_monitor_factory.dart';
+import 'screen_monitor_interface.dart';
 
 ScreenMonitorInterface createScreenMonitor() => NativeScreenMonitorImpl();
 

@@ -5,6 +5,7 @@ import '../core/utils/database_factory.dart';
 import '../core/services/audio_service.dart';
 import '../core/services/screen_monitor_service.dart';
 import '../core/services/screen_monitor_factory.dart';
+import '../core/services/screen_monitor_interface.dart';
 import '../core/services/attention_monitor_service.dart';
 
 class FocusProvider extends ChangeNotifier {

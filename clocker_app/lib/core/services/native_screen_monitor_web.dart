@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screen_monitor_factory.dart';
+import 'screen_monitor_interface.dart';
 
 ScreenMonitorInterface createScreenMonitor() => WebScreenMonitor();
 

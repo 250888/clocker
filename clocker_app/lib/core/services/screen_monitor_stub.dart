@@ -1,4 +1,14 @@
-import 'screen_monitor_factory.dart';
+import 'screen_monitor_interface.dart';
 
-ScreenMonitorInterface createScreenMonitor() => throw UnsupportedError(
-    'No screen monitor implementation available for this platform.');
+ScreenMonitorInterface createScreenMonitor() => StubScreenMonitor();
+
+class StubScreenMonitor implements ScreenMonitorInterface {
+  @override
+  void startNativeMonitoring() {}
+
+  @override
+  void stopNativeMonitoring() {}
+
+  @override
+  void dispose() {}
+}
