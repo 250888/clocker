@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/spacetime.dart';
 import '../core/engine/lorentz_engine.dart';
-import '../core/utils/database_helper.dart';
+import '../core/utils/database_factory.dart';
 
 class SpacetimeProvider extends ChangeNotifier {
   List<Spacetime> _spacetimes = [];
   Spacetime? _activeSpacetime;
-  final DatabaseHelper _db = DatabaseHelper();
+  final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   List<Spacetime> get spacetimes => _spacetimes;
   Spacetime? get activeSpacetime => _activeSpacetime;

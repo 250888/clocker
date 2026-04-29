@@ -6,8 +6,11 @@ import '../../models/focus_session.dart';
 import '../../models/daily_record.dart';
 import '../../models/achievement.dart';
 import '../../models/app_settings.dart';
+import 'database_interface.dart';
 
-class WebDatabaseHelper {
+DatabaseHelperInterface createDatabaseHelper() => WebDatabaseHelper();
+
+class WebDatabaseHelper implements DatabaseHelperInterface {
   static const String _prefix = 'clocker_';
 
   static const String _spacetimesKey = 'spacetimes';

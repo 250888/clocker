@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../core/engine/lorentz_engine.dart';
-import '../core/utils/database_helper.dart';
+import '../core/utils/database_factory.dart';
 
 class SettingsProvider extends ChangeNotifier {
   AppSettings _settings = AppSettings();
-  final DatabaseHelper _db = DatabaseHelper();
+  final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   AppSettings get settings => _settings;
 

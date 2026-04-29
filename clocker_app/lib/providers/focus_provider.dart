@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/focus_session.dart';
-import '../core/utils/database_helper.dart';
+import '../core/utils/database_factory.dart';
 
 class FocusProvider extends ChangeNotifier {
   FocusSession? _currentSession;
@@ -12,7 +12,7 @@ class FocusProvider extends ChangeNotifier {
   bool _isRunning = false;
   bool _isPaused = false;
   int _distractionCount = 0;
-  final DatabaseHelper _db = DatabaseHelper();
+  final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   FocusSession? get currentSession => _currentSession;
   Duration get elapsed => _elapsed;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/achievement.dart';
-import '../core/utils/database_helper.dart';
+import '../core/utils/database_factory.dart';
 
 class AchievementProvider extends ChangeNotifier {
   List<Achievement> _achievements = [];
-  final DatabaseHelper _db = DatabaseHelper();
+  final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   List<Achievement> get achievements => _achievements;
   List<Achievement> get unlockedAchievements =>

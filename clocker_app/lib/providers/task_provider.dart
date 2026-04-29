@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
-import '../core/utils/database_helper.dart';
+import '../core/utils/database_factory.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<Task> _tasks = [];
   String? _spacetimeId;
-  final DatabaseHelper _db = DatabaseHelper();
+  final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   List<Task> get tasks => _tasks;
   List<Task> get pendingTasks => _tasks.where((t) => t.status == TaskStatus.pending).toList();

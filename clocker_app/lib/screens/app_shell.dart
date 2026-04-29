@@ -36,17 +36,21 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _initData() async {
-    final settingsProvider = context.read<SettingsProvider>();
-    final spacetimeProvider = context.read<SpacetimeProvider>();
-    final achievementProvider = context.read<AchievementProvider>();
+    try {
+      final settingsProvider = context.read<SettingsProvider>();
+      final spacetimeProvider = context.read<SpacetimeProvider>();
+      final achievementProvider = context.read<AchievementProvider>();
 
-    await settingsProvider.loadSettings();
-    await spacetimeProvider.loadSpacetimes();
-    await achievementProvider.loadAchievements();
+      await settingsProvider.loadSettings();
+      await spacetimeProvider.loadSpacetimes();
+      await achievementProvider.loadAchievements();
 
-    if (spacetimeProvider.activeSpacetime != null) {
-      final taskProvider = context.read<TaskProvider>();
-      await taskProvider.loadTasks(spacetimeProvider.activeSpacetime!.id);
+      if (spacetimeProvider.activeSpacetime != null) {
+        final taskProvider = context.read<TaskProvider>();
+        await taskProvider.loadTasks(spacetimeProvider.activeSpacetime!.id);
+      }
+    } catch (e) {
+      debugPrint('InitData error: $e');
     }
   }
 

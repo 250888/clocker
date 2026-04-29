@@ -149,28 +149,30 @@ class Spacetime {
   }
 
   factory Spacetime.fromMap(Map<String, dynamic> map) {
+    final flowModeIndex = map['flowMode'];
+    final flowMode = FlowMode.values[(flowModeIndex is int ? flowModeIndex : 0).clamp(0, FlowMode.values.length - 1)];
     return Spacetime(
-      id: map['id'],
-      name: map['name'],
-      createdAt: DateTime.parse(map['createdAt']),
-      deadline: DateTime.parse(map['deadline']),
-      v0: map['v0'],
-      c: map['c'],
-      flowMode: FlowMode.values[map['flowMode']],
-      advanceDays: map['advanceDays'],
+      id: map['id'] as String?,
+      name: map['name'] as String? ?? '',
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'] as String) : DateTime.now(),
+      deadline: map['deadline'] != null ? DateTime.parse(map['deadline'] as String) : DateTime.now().add(const Duration(days: 30)),
+      v0: (map['v0'] as num?)?.toDouble() ?? 2.0,
+      c: (map['c'] as num?)?.toDouble() ?? 8.0,
+      flowMode: flowMode,
+      advanceDays: (map['advanceDays'] as num?)?.toInt() ?? 14,
       isActive: map['isActive'] == 1,
       appDeadline: map['appDeadline'] != null
-          ? DateTime.parse(map['appDeadline'])
+          ? DateTime.parse(map['appDeadline'] as String)
           : null,
-      totalFocusHours: map['totalFocusHours'] ?? 0,
-      totalTaskValue: map['totalTaskValue'] ?? 0,
-      totalScreenPenalty: map['totalScreenPenalty'] ?? 0,
-      timeFreezesUsed: map['timeFreezesUsed'] ?? 0,
-      timeRewindsUsed: map['timeRewindsUsed'] ?? 0,
+      totalFocusHours: (map['totalFocusHours'] as num?)?.toDouble() ?? 0,
+      totalTaskValue: (map['totalTaskValue'] as num?)?.toDouble() ?? 0,
+      totalScreenPenalty: (map['totalScreenPenalty'] as num?)?.toDouble() ?? 0,
+      timeFreezesUsed: (map['timeFreezesUsed'] as num?)?.toInt() ?? 0,
+      timeRewindsUsed: (map['timeRewindsUsed'] as num?)?.toInt() ?? 0,
       lastFreezeTime: map['lastFreezeTime'] != null
-          ? DateTime.parse(map['lastFreezeTime'])
+          ? DateTime.parse(map['lastFreezeTime'] as String)
           : null,
-      emoji: map['emoji'],
+      emoji: map['emoji'] as String?,
     );
   }
 }

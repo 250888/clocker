@@ -112,11 +112,13 @@ class AppSettings {
   }
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
+    final flowModeIndex = map['defaultFlowMode'];
+    final flowMode = FlowMode.values[(flowModeIndex is int ? flowModeIndex : 0).clamp(0, FlowMode.values.length - 1)];
     return AppSettings(
-      defaultV0: map['defaultV0'] ?? 2.0,
-      defaultC: map['defaultC'] ?? 8.0,
-      defaultAdvanceDays: map['defaultAdvanceDays'] ?? 14,
-      defaultFlowMode: FlowMode.values[map['defaultFlowMode'] ?? 0],
+      defaultV0: (map['defaultV0'] as num?)?.toDouble() ?? 2.0,
+      defaultC: (map['defaultC'] as num?)?.toDouble() ?? 8.0,
+      defaultAdvanceDays: (map['defaultAdvanceDays'] as num?)?.toInt() ?? 14,
+      defaultFlowMode: flowMode,
       enableNotifications: map['enableNotifications'] == 1,
       enableSoundEffects: map['enableSoundEffects'] == 1,
       enableWhiteNoise: map['enableWhiteNoise'] == 1,
@@ -124,14 +126,14 @@ class AppSettings {
       enableCameraMonitoring: map['enableCameraMonitoring'] == 1,
       enableMicrophoneMonitoring: map['enableMicrophoneMonitoring'] == 1,
       enableMotionMonitoring: map['enableMotionMonitoring'] == 1,
-      screenPenaltyWeight: map['screenPenaltyWeight'] ?? 1.0,
-      studyCreditWeight: map['studyCreditWeight'] ?? 0.8,
-      pomodoroDuration: map['pomodoroDuration'] ?? 25,
-      shortBreakDuration: map['shortBreakDuration'] ?? 5,
-      longBreakDuration: map['longBreakDuration'] ?? 15,
-      pomodorosBeforeLongBreak: map['pomodorosBeforeLongBreak'] ?? 4,
+      screenPenaltyWeight: (map['screenPenaltyWeight'] as num?)?.toDouble() ?? 1.0,
+      studyCreditWeight: (map['studyCreditWeight'] as num?)?.toDouble() ?? 0.8,
+      pomodoroDuration: (map['pomodoroDuration'] as num?)?.toInt() ?? 25,
+      shortBreakDuration: (map['shortBreakDuration'] as num?)?.toInt() ?? 5,
+      longBreakDuration: (map['longBreakDuration'] as num?)?.toInt() ?? 15,
+      pomodorosBeforeLongBreak: (map['pomodorosBeforeLongBreak'] as num?)?.toInt() ?? 4,
       privacyAccepted: map['privacyAccepted'] == 1,
-      selectedTheme: map['selectedTheme'] ?? 'cosmic',
+      selectedTheme: map['selectedTheme'] as String? ?? 'cosmic',
     );
   }
 }

@@ -6,8 +6,11 @@ import '../../models/focus_session.dart';
 import '../../models/daily_record.dart';
 import '../../models/achievement.dart';
 import '../../models/app_settings.dart';
+import 'database_interface.dart';
 
-class DatabaseHelper {
+DatabaseHelperInterface createDatabaseHelper() => DatabaseHelper();
+
+class DatabaseHelper implements DatabaseHelperInterface {
   static const _databaseName = 'clocker.db';
   static const _databaseVersion = 1;
 

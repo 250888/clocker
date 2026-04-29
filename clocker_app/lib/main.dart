@@ -13,14 +13,6 @@ import 'screens/create_spacetime_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
 
   runApp(const ClockerApp());
 }
@@ -61,6 +53,7 @@ class _AppEntry extends StatefulWidget {
 
 class _AppEntryState extends State<_AppEntry> {
   bool _initialized = false;
+  String? _error;
 
   @override
   void initState() {
@@ -69,14 +62,39 @@ class _AppEntryState extends State<_AppEntry> {
   }
 
   Future<void> _initApp() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() => _initialized = true);
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() => _initialized = true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Initialization Error', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(_error!, style: TextStyle(fontSize: 14), textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     if (!_initialized) {
       return const SplashScreen();
     }

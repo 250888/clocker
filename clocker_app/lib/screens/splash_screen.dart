@@ -34,12 +34,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkPrivacy() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
 
-    final settings = context.read<SettingsProvider>();
-    if (!settings.settings.privacyAccepted) {
-      _showPrivacyDialog();
+      final settings = context.read<SettingsProvider>();
+      if (!settings.settings.privacyAccepted) {
+        _showPrivacyDialog();
+      }
+    } catch (e) {
+      debugPrint('CheckPrivacy error: $e');
     }
   }
 

@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Large files
+Android Studio 2025/
+*.zip.xltd
+*.zip
+_gh_pages_deploy/
