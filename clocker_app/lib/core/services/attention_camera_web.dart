@@ -1,20 +1,23 @@
 import 'dart:js_interop';
-import 'package:web/web.dart' as web;
-import 'attention_monitor_service.dart';
+import 'attention_camera_interface.dart';
 
 AttentionCameraInterface createAttentionCamera() => WebCamera();
+
+@JS('window.clockerCamera.start')
+external JSPromise _cameraStart();
+
+@JS('window.clockerCamera.stop')
+external void _cameraStop();
+
+@JS('window.clockerCamera.setAttention')
+external void _cameraSetAttention(JSNumber score);
 
 class WebCamera implements AttentionCameraInterface {
   @override
   Future<bool> start() async {
     try {
-      final camera = web.window.getProperty('clockerCamera'.toJS);
-      if (camera == null) return false;
-      final startFn = camera.getProperty('start'.toJS);
-      if (startFn == null) return false;
-      await (startFn.callMethod0() as JSPromise).toDart;
-      final isRunning = camera.getProperty('isRunning'.toJS) as JSBoolean;
-      return isRunning.toDart;
+      await _cameraStart().toDart;
+      return true;
     } catch (e) {
       return false;
     }
@@ -23,11 +26,7 @@ class WebCamera implements AttentionCameraInterface {
   @override
   void stop() {
     try {
-      final camera = web.window.getProperty('clockerCamera'.toJS);
-      if (camera != null) {
-        final stopFn = camera.getProperty('stop'.toJS);
-        stopFn?.callMethod0();
-      }
+      _cameraStop();
     } catch (e) {
       // ignore
     }
@@ -36,11 +35,7 @@ class WebCamera implements AttentionCameraInterface {
   @override
   void updateAttention(double score) {
     try {
-      final camera = web.window.getProperty('clockerCamera'.toJS);
-      if (camera != null) {
-        final setAttnFn = camera.getProperty('setAttention'.toJS);
-        setAttnFn?.callMethod1(score.toJS);
-      }
+      _cameraSetAttention(score.toJS);
     } catch (e) {
       // ignore
     }

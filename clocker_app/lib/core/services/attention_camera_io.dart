@@ -1,18 +1,10 @@
-import 'dart:io';
-import 'attention_monitor_service.dart';
+import 'attention_camera_interface.dart';
 
 AttentionCameraInterface createAttentionCamera() => NativeCamera();
 
 class NativeCamera implements AttentionCameraInterface {
   @override
-  Future<bool> start() async {
-    try {
-      // Native platforms use simulated camera detection
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
+  Future<bool> start() async => true;
 
   @override
   void stop() {}

@@ -1,13 +1,14 @@
-import 'attention_camera_io.dart'
-    if (dart.library.html) 'attention_camera_web.dart'
-    if (dart.library.io) 'attention_camera_io.dart' as impl;
+import 'attention_camera_interface.dart';
 
-import 'attention_monitor_service.dart';
+AttentionCameraInterface createAttentionCamera() => StubCamera();
 
-AttentionCameraInterface createAttentionCamera() => impl.createAttentionCamera();
+class StubCamera implements AttentionCameraInterface {
+  @override
+  Future<bool> start() async => true;
 
-abstract class AttentionCameraInterface {
-  Future<bool> start();
-  void stop();
-  void updateAttention(double score);
+  @override
+  void stop() {}
+
+  @override
+  void updateAttention(double score) {}
 }
