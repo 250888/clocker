@@ -171,18 +171,18 @@ class Achievement {
 
   factory Achievement.fromMap(Map<String, dynamic> map) {
     return Achievement(
-      id: map['id'],
-      name: map['name'],
-      description: map['description'],
-      tier: AchievementTier.values[map['tier']],
-      category: AchievementCategory.values[map['category']],
-      icon: map['icon'],
-      requiredValue: map['requiredValue'],
-      isUnlocked: map['isUnlocked'] == 1,
+      id: (map['id'] ?? '') as String,
+      name: (map['name'] ?? '') as String,
+      description: (map['description'] ?? '') as String,
+      tier: AchievementTier.values[((map['tier'] as int?) ?? 0).clamp(0, AchievementTier.values.length - 1)],
+      category: AchievementCategory.values[((map['category'] as int?) ?? 0).clamp(0, AchievementCategory.values.length - 1)],
+      icon: (map['icon'] ?? '⭐') as String,
+      requiredValue: (map['requiredValue'] as num?)?.toDouble() ?? 0.0,
+      isUnlocked: (map['isUnlocked'] as int?) == 1,
       unlockedAt: map['unlockedAt'] != null
-          ? DateTime.parse(map['unlockedAt'])
+          ? DateTime.tryParse(map['unlockedAt'].toString())
           : null,
-      reward: map['reward'],
+      reward: map['reward'] as String?,
     );
   }
 }

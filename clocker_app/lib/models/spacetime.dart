@@ -150,27 +150,27 @@ class Spacetime {
 
   factory Spacetime.fromMap(Map<String, dynamic> map) {
     return Spacetime(
-      id: map['id'],
-      name: map['name'],
-      createdAt: DateTime.parse(map['createdAt']),
-      deadline: DateTime.parse(map['deadline']),
-      v0: map['v0'],
-      c: map['c'],
-      flowMode: FlowMode.values[map['flowMode']],
-      advanceDays: map['advanceDays'],
-      isActive: map['isActive'] == 1,
+      id: (map['id'] ?? '') as String,
+      name: (map['name'] ?? '') as String,
+      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      deadline: DateTime.tryParse(map['deadline']?.toString() ?? '') ?? DateTime.now(),
+      v0: (map['v0'] as num?)?.toDouble() ?? 2.0,
+      c: (map['c'] as num?)?.toDouble() ?? 8.0,
+      flowMode: FlowMode.values[((map['flowMode'] as int?) ?? 0).clamp(0, FlowMode.values.length - 1)],
+      advanceDays: (map['advanceDays'] as int?) ?? 14,
+      isActive: (map['isActive'] as int?) == 1,
       appDeadline: map['appDeadline'] != null
-          ? DateTime.parse(map['appDeadline'])
+          ? DateTime.tryParse(map['appDeadline'].toString())
           : null,
-      totalFocusHours: map['totalFocusHours'] ?? 0,
-      totalTaskValue: map['totalTaskValue'] ?? 0,
-      totalScreenPenalty: map['totalScreenPenalty'] ?? 0,
-      timeFreezesUsed: map['timeFreezesUsed'] ?? 0,
-      timeRewindsUsed: map['timeRewindsUsed'] ?? 0,
+      totalFocusHours: (map['totalFocusHours'] as num?)?.toDouble() ?? 0.0,
+      totalTaskValue: (map['totalTaskValue'] as num?)?.toDouble() ?? 0.0,
+      totalScreenPenalty: (map['totalScreenPenalty'] as num?)?.toDouble() ?? 0.0,
+      timeFreezesUsed: (map['timeFreezesUsed'] as int?) ?? 0,
+      timeRewindsUsed: (map['timeRewindsUsed'] as int?) ?? 0,
       lastFreezeTime: map['lastFreezeTime'] != null
-          ? DateTime.parse(map['lastFreezeTime'])
+          ? DateTime.tryParse(map['lastFreezeTime'].toString())
           : null,
-      emoji: map['emoji'],
+      emoji: map['emoji'] as String?,
     );
   }
 }
