@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clocker - 下载</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0A0A1A;
+      color: #E8E8F0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 32px;
+      background: linear-gradient(135deg, #6C5CE7, #00CEC9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #8888AA;
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+    .download-card {
+      background: #1A1A2E;
+      border: 1px solid rgba(108, 92, 231, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .download-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(108, 92, 231, 0.6);
+    }
+    .download-card .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .download-card h2 {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    .download-card .desc {
+      color: #8888AA;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .download-btn {
+      display: inline-block;
+      padding: 10px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .download-btn.primary {
+      background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+      color: white;
+    }
+    .download-btn.primary:hover {
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+    }
+    .download-btn.secondary {
+      background: rgba(108, 92, 231, 0.15);
+      color: #A29BFE;
+      border: 1px solid rgba(108, 92, 231, 0.3);
+    }
+    .download-btn.secondary:hover {
+      background: rgba(108, 92, 231, 0.25);
+    }
+    .web-link {
+      margin-top: 24px;
+      padding: 16px;
+      background: rgba(0, 206, 201, 0.1);
+      border: 1px solid rgba(0, 206, 201, 0.3);
+      border-radius: 12px;
+    }
+    .web-link a {
+      color: #00CEC9;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .web-link a:hover {
+      text-decoration: underline;
+    }
+    .features {
+      margin-top: 32px;
+      text-align: left;
+    }
+    .features h3 {
+      font-size: 14px;
+      color: #A29BFE;
+      margin-bottom: 12px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13px;
+      color: #8888AA;
+    }
+    .feature-item span {
+      margin-right: 8px;
+      font-size: 16px;
+    }
+    .footer {
+      margin-top: 40px;
+      font-size: 11px;
+      color: #555577;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">⏰</div>
+    <h1>Clocker</h1>
+    <p class="subtitle">用狭义相对论，根治拖延症<br>你的行动速度，决定你的时间流速</p>
+
+    <div class="download-card">
+      <div class="icon">🖥️</div>
+      <h2>Windows 桌面版</h2>
+      <p class="desc">支持屏幕监控 · 前台窗口检测 · PowerShell + Win32 API</p>
+      <a class="download-btn primary" href="https://github.com/250888/clocker/releases/latest/download/clocker-windows.zip">
+        下载 Windows 版
+      </a>
+    </div>
+
+    <div class="download-card">
+      <div class="icon">📱</div>
+      <h2>Android 安卓版</h2>
+      <p class="desc">支持摄像头注意力检测 · 应用使用监控 · 通知提醒</p>
+      <a class="download-btn secondary" href="https://github.com/250888/clocker/releases/latest/download/clocker-android.apk">
+        下载 APK
+      </a>
+    </div>
+
+    <div class="web-link">
+      🌐 无需下载，直接在浏览器中使用：<br>
+      <a href="https://250888.github.io/clocker/">https://250888.github.io/clocker/</a>
+    </div>
+
+    <div class="features">
+      <h3>核心功能</h3>
+      <div class="feature-item"><span>🎵</span> 6种程序生成白噪音（雨声、炉火、海浪、微风、森林、咖啡馆）</div>
+      <div class="feature-item"><span>🔔</span> 专注完成/分心/成就提示音（C-E-G和弦、200Hz警告、上升音阶）</div>
+      <div class="feature-item"><span>🖥️</span> Windows屏幕监控（GetForegroundWindow + 进程分类）</div>
+      <div class="feature-item"><span>👁️</span> 视觉注意力监控（摄像头检测、心流状态、注意力分数）</div>
+      <div class="feature-item"><span>⏱️</span> 番茄钟 + 洛伦兹变换时间膨胀引擎</div>
+      <div class="feature-item"><span>📊</span> 效率比、分心统计、心流检测</div>
+    </div>
+
+    <div class="footer">
+      Clocker v1.0.0 · GitHub: <a href="https://github.com/250888/clocker" style="color:#6C5CE7">250888/clocker</a>
+    </div>
+  </div>
+</body>
+</html>
