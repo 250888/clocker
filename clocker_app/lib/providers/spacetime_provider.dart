@@ -64,9 +64,9 @@ class SpacetimeProvider extends ChangeNotifier {
   }
 
   void setActiveSpacetime(Spacetime spacetime) {
-    for (var s in _spacetimes) {
-      s = s.copyWith(isActive: s.id == spacetime.id);
-      _db.updateSpacetime(s);
+    for (int i = 0; i < _spacetimes.length; i++) {
+      _spacetimes[i] = _spacetimes[i].copyWith(isActive: _spacetimes[i].id == spacetime.id);
+      _db.updateSpacetime(_spacetimes[i]);
     }
     _activeSpacetime = spacetime;
     notifyListeners();

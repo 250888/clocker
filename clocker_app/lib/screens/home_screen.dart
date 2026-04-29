@@ -8,6 +8,7 @@ import '../providers/achievement_provider.dart';
 import '../widgets/flow_rate_gauge.dart';
 import '../widgets/countdown_display.dart';
 import '../widgets/task_card.dart';
+import 'app_shell.dart';
 import '../widgets/achievement_badge.dart';
 import 'create_spacetime_screen.dart';
 
@@ -234,7 +235,10 @@ class HomeScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    DefaultTabController.of(context).animateTo(2);
+                    final appShell = context.findAncestorStateOfType<AppShellState>();
+                    if (appShell != null) {
+                      appShell.navigateTo(2);
+                    }
                   },
                   child: Text('查看全部', style: TextStyle(color: AppColors.primary, fontSize: 12)),
                 ),

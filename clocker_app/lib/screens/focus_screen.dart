@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/services/audio_service.dart';
+import '../core/services/camera_service_factory.dart';
 import '../providers/spacetime_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/focus_provider.dart';
 import '../models/focus_session.dart';
 import '../widgets/pomodoro_timer.dart';
@@ -13,9 +16,10 @@ class FocusScreen extends StatefulWidget {
   State<FocusScreen> createState() => _FocusScreenState();
 }
 
-class _FocusScreenState extends State<FocusScreen> {
+class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   FocusMode _selectedMode = FocusMode.deepFocus;
   Duration _targetDuration = const Duration(minutes: 25);
+  double _noiseVolume = 0.5;
 
   final List<Map<String, dynamic>> _durations = [
     {'label': '15分钟', 'duration': const Duration(minutes: 15)},
@@ -31,6 +35,27 @@ class _FocusScreenState extends State<FocusScreen> {
     {'mode': FocusMode.reading, 'label': '阅读模式', 'icon': Icons.menu_book, 'color': AppColors.cosmic4},
     {'mode': FocusMode.writing, 'label': '写作模式', 'icon': Icons.edit, 'color': AppColors.warning},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final focusProvider = context.read<FocusProvider>();
+    if (focusProvider.isRunning) {
+      final isVisible = state == AppLifecycleState.resumed;
+      focusProvider.screenMonitor.reportPageVisibility(isVisible);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +91,18 @@ class _FocusScreenState extends State<FocusScreen> {
               _buildDurationSelector(),
               const SizedBox(height: 16),
               _buildModeGrid(),
+              const SizedBox(height: 16),
+              _buildWhiteNoiseSelector(),
+              const SizedBox(height: 16),
+              _buildFeatureToggles(focusProvider),
             ] else ...[
               _buildFocusStats(focusProvider, spacetimeProvider),
+              const SizedBox(height: 12),
+              _buildMonitorPanel(focusProvider),
+              const SizedBox(height: 12),
+              if (focusProvider.showCamera) _buildCameraPreview(focusProvider),
+              const SizedBox(height: 12),
+              if (focusProvider.enableWhiteNoise) _buildVolumeControl(focusProvider),
             ],
             const SizedBox(height: 24),
             _buildRecentSessions(focusProvider, spacetimeProvider),
@@ -188,6 +223,119 @@ class _FocusScreenState extends State<FocusScreen> {
     );
   }
 
+  Widget _buildWhiteNoiseSelector() {
+    final audioService = AudioService();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('白噪音', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+          childAspectRatio: 2.2,
+          children: audioService.soundOptions.map((sound) {
+            final isSelected = context.read<FocusProvider>().whiteNoiseType == sound['id'];
+            final color = sound['color'] as Color;
+            return GestureDetector(
+              onTap: () {
+                context.read<FocusProvider>().configure(noiseType: sound['id'] as String);
+                setState(() {});
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isSelected ? color.withValues(alpha: 0.15) : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: isSelected ? Border.all(color: color) : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(sound['icon'] as IconData, color: color, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      sound['name'] as String,
+                      style: TextStyle(
+                        color: isSelected ? color : AppColors.textHint,
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureToggles(FocusProvider focusProvider) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('功能开关', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            title: const Text('音效提示', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('完成/分心/成就提示音', style: TextStyle(fontSize: 10)),
+            value: focusProvider.enableSoundEffects,
+            onChanged: (v) => focusProvider.configure(soundEffects: v),
+            dense: true,
+            activeColor: AppColors.primary,
+          ),
+          SwitchListTile(
+            title: const Text('白噪音', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('环境音效帮助专注', style: TextStyle(fontSize: 10)),
+            value: focusProvider.enableWhiteNoise,
+            onChanged: (v) => focusProvider.configure(whiteNoise: v),
+            dense: true,
+            activeColor: AppColors.primary,
+          ),
+          SwitchListTile(
+            title: const Text('屏幕监控', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('检测前台应用效率比', style: TextStyle(fontSize: 10)),
+            value: focusProvider.enableScreenMonitoring,
+            onChanged: (v) => focusProvider.configure(screenMonitoring: v),
+            dense: true,
+            activeColor: AppColors.accent,
+          ),
+          SwitchListTile(
+            title: const Text('注意力监控', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('摄像头检测专注状态', style: TextStyle(fontSize: 10)),
+            value: focusProvider.enableAttentionMonitoring,
+            onChanged: (v) => focusProvider.configure(attentionMonitoring: v),
+            dense: true,
+            activeColor: AppColors.info,
+          ),
+          SwitchListTile(
+            title: const Text('摄像头画面', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('在界面中显示摄像头预览', style: TextStyle(fontSize: 10)),
+            value: focusProvider.showCamera,
+            onChanged: (v) async {
+              if (v && focusProvider.cameraService == null) {
+                await focusProvider.initCamera();
+              }
+              focusProvider.configure(showCameraPreview: v);
+            },
+            dense: true,
+            activeColor: AppColors.success,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFocusStats(FocusProvider focusProvider, SpacetimeProvider spacetimeProvider) {
     final st = spacetimeProvider.activeSpacetime!;
     final engine = spacetimeProvider.getEngine()!;
@@ -236,6 +384,380 @@ class _FocusScreenState extends State<FocusScreen> {
         const SizedBox(height: 2),
         Text(label, style: TextStyle(color: AppColors.textHint, fontSize: 11)),
       ],
+    );
+  }
+
+  Widget _buildMonitorPanel(FocusProvider focusProvider) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.monitor_heart, color: AppColors.info, size: 18),
+              const SizedBox(width: 6),
+              Text('实时监控',
+                  style: TextStyle(color: AppColors.info, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              if (focusProvider.attentionMonitor.isInFlowState)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.flowSlow.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bolt, color: AppColors.flowSlow, size: 12),
+                      const SizedBox(width: 3),
+                      Text('心流', style: TextStyle(color: AppColors.flowSlow, fontSize: 10, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (focusProvider.enableScreenMonitoring) ...[
+            _buildMonitorSection(
+              icon: Icons.screen_lock_portrait,
+              title: '屏幕监控',
+              color: AppColors.accent,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('效率比', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                      Text('${(focusProvider.screenMonitor.productivityRatio * 100).toInt()}%',
+                          style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: focusProvider.screenMonitor.productivityRatio,
+                      backgroundColor: AppColors.danger.withValues(alpha: 0.3),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        focusProvider.screenMonitor.productivityRatio > 0.7
+                            ? AppColors.success
+                            : AppColors.warning,
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('当前: ${focusProvider.screenMonitor.currentApp}',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+                      Text('切换: ${focusProvider.screenMonitor.appSwitchCount}次',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('高效: ${focusProvider.screenMonitor.productiveTime.inMinutes}分钟',
+                          style: TextStyle(color: AppColors.success, fontSize: 10)),
+                      Text('低效: ${focusProvider.screenMonitor.unproductiveTime.inMinutes}分钟',
+                          style: TextStyle(color: AppColors.danger, fontSize: 10)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          if (focusProvider.enableAttentionMonitoring) ...[
+            _buildMonitorSection(
+              icon: Icons.visibility,
+              title: '注意力监控',
+              color: focusProvider.attentionMonitor.isInFlowState ? AppColors.flowSlow : AppColors.primary,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('注意力分数', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                      Text('${(focusProvider.attentionMonitor.attentionScore * 100).toInt()}%',
+                          style: TextStyle(
+                            color: focusProvider.attentionMonitor.attentionScore > 0.7
+                                ? AppColors.success
+                                : focusProvider.attentionMonitor.attentionScore > 0.4
+                                    ? AppColors.warning
+                                    : AppColors.danger,
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: focusProvider.attentionMonitor.attentionScore,
+                      backgroundColor: AppColors.surfaceLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        focusProvider.attentionMonitor.attentionScore > 0.7
+                            ? AppColors.success
+                            : focusProvider.attentionMonitor.attentionScore > 0.4
+                                ? AppColors.warning
+                                : AppColors.danger,
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('分心: ${focusProvider.attentionMonitor.distractionEvents}次',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+                      Text('稳定: ${(focusProvider.attentionMonitor.focusStability * 100).toInt()}%',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('专注: ${focusProvider.attentionMonitor.focusedDuration.inMinutes}分钟',
+                          style: TextStyle(color: AppColors.success, fontSize: 10)),
+                      Text('连续: ${focusProvider.attentionMonitor.currentFocusStreak.inMinutes}分钟',
+                          style: TextStyle(color: AppColors.flowSlow, fontSize: 10)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.face,
+                          size: 10,
+                          color: focusProvider.attentionMonitor.faceDetected > 0.5
+                              ? AppColors.success : AppColors.danger),
+                      const SizedBox(width: 3),
+                      Text(focusProvider.attentionMonitor.faceDetected > 0.5 ? '人脸: 在' : '人脸: 离开',
+                          style: TextStyle(
+                              color: focusProvider.attentionMonitor.faceDetected > 0.5
+                                  ? AppColors.success : AppColors.danger,
+                              fontSize: 9)),
+                      const SizedBox(width: 8),
+                      Icon(Icons.remove_red_eye,
+                          size: 10,
+                          color: focusProvider.attentionMonitor.eyeOpenness > 0.5
+                              ? AppColors.success : AppColors.warning),
+                      const SizedBox(width: 3),
+                      Text('眼: ${(focusProvider.attentionMonitor.eyeOpenness * 100).toInt()}%',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 9)),
+                      const SizedBox(width: 8),
+                      Text('头: ${(focusProvider.attentionMonitor.headPose * 10).toStringAsFixed(1)}',
+                          style: TextStyle(color: AppColors.textHint, fontSize: 9)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          if (focusProvider.enableWhiteNoise) ...[
+            _buildMonitorSection(
+              icon: Icons.graphic_eq,
+              title: '白噪音',
+              color: AppColors.primary,
+              child: Row(
+                children: [
+                  Icon(AudioService().soundOptions.firstWhere(
+                      (s) => s['id'] == focusProvider.whiteNoiseType,
+                      orElse: () => {'icon': Icons.music_note})['icon'] as IconData,
+                      color: AppColors.primary, size: 16),
+                  const SizedBox(width: 6),
+                  Text(AudioService().soundOptions.firstWhere(
+                      (s) => s['id'] == focusProvider.whiteNoiseType,
+                      orElse: () => {'name': '未知'})['name'] as String,
+                      style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+                  const Spacer(),
+                  Icon(AudioService().isPlaying ? Icons.volume_up : Icons.volume_off,
+                      color: AppColors.primary, size: 14),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonitorSection({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 4),
+            Text(title, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCameraPreview(FocusProvider focusProvider) {
+    final camera = focusProvider.cameraService;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.videocam, color: AppColors.success, size: 18),
+              const SizedBox(width: 6),
+              Text('摄像头',
+                  style: TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: (camera?.isStreaming ?? false) ? AppColors.success : AppColors.danger,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                (camera?.isStreaming ?? false) ? '直播中' : '未连接',
+                style: TextStyle(
+                  color: (camera?.isStreaming ?? false) ? AppColors.success : AppColors.textHint,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (camera != null)
+            camera.buildCameraPreview(height: 200)
+          else
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.videocam_off, color: Colors.white38, size: 32),
+                    SizedBox(height: 8),
+                    Text('摄像头未初始化', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          if (focusProvider.enableAttentionMonitoring) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildCameraIndicator(
+                  Icons.face,
+                  '人脸',
+                  focusProvider.attentionMonitor.faceDetected > 0.5,
+                ),
+                _buildCameraIndicator(
+                  Icons.remove_red_eye,
+                  '眼睛',
+                  focusProvider.attentionMonitor.eyeOpenness > 0.5,
+                ),
+                _buildCameraIndicator(
+                  Icons.center_focus_strong,
+                  '正面',
+                  focusProvider.attentionMonitor.headPose.abs() < 0.4,
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCameraIndicator(IconData icon, String label, bool active) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: active ? AppColors.success.withValues(alpha: 0.2) : AppColors.danger.withValues(alpha: 0.2),
+          ),
+          child: Icon(icon, color: active ? AppColors.success : AppColors.danger, size: 16),
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(
+          color: active ? AppColors.success : AppColors.textHint,
+          fontSize: 9,
+        )),
+      ],
+    );
+  }
+
+  Widget _buildVolumeControl(FocusProvider focusProvider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.volume_down, color: AppColors.textHint, size: 18),
+          Expanded(
+            child: Slider(
+              value: _noiseVolume,
+              min: 0.0,
+              max: 1.0,
+              divisions: 20,
+              activeColor: AppColors.primary,
+              inactiveColor: AppColors.surfaceLight,
+              onChanged: (v) {
+                setState(() => _noiseVolume = v);
+                focusProvider.audio.setVolume(v);
+              },
+            ),
+          ),
+          Icon(Icons.volume_up, color: AppColors.textHint, size: 18),
+        ],
+      ),
     );
   }
 
@@ -332,7 +854,15 @@ class _FocusScreenState extends State<FocusScreen> {
   }
 
   void _startFocus(FocusProvider focusProvider, SpacetimeProvider spacetimeProvider) {
-    focusProvider.startFocus(spacetimeProvider.activeSpacetime!.id);
+    final settings = context.read<SettingsProvider>().settings;
+    focusProvider.configure(
+      soundEffects: settings.enableSoundEffects,
+      whiteNoise: settings.enableWhiteNoise,
+      screenMonitoring: settings.enableScreenMonitoring,
+      attentionMonitoring: settings.enableCameraMonitoring,
+    );
+    final flowRate = spacetimeProvider.activeSpacetime?.currentFlowRate ?? 1.0;
+    focusProvider.startFocus(spacetimeProvider.activeSpacetime!.id, flowRate: flowRate);
   }
 
   Future<void> _endFocus(FocusProvider focusProvider, SpacetimeProvider spacetimeProvider) async {
