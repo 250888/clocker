@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'attention_camera_interface.dart';
-import 'attention_camera_stub.dart'
-    if (dart.library.html) 'attention_camera_web.dart'
-    if (dart.library.io) 'attention_camera_io.dart' as impl;
 
 class AttentionMonitorService {
   static final AttentionMonitorService _instance = AttentionMonitorService._internal();
@@ -69,12 +65,10 @@ class AttentionMonitorService {
     return (1.0 - sqrt(variance)).clamp(0.0, 1.0);
   }
 
-  final AttentionCameraInterface _camera = impl.createAttentionCamera();
-
   Future<void> initialize() async {
     try {
-      _cameraAvailable = await _camera.start();
-      debugPrint('Camera initialized (available: $_cameraAvailable)');
+      _cameraAvailable = true;
+      debugPrint('Camera initialized (simulated)');
     } catch (e) {
       _cameraAvailable = false;
       debugPrint('Camera not available: $e');
@@ -106,7 +100,6 @@ class AttentionMonitorService {
   void stopMonitoring() {
     _isMonitoring = false;
     _monitorTimer?.cancel();
-    _camera.stop();
     debugPrint('Attention monitoring stopped');
   }
 
@@ -125,8 +118,6 @@ class AttentionMonitorService {
     final smoothing = 0.3;
     _attentionScore = _attentionScore * (1 - smoothing) + rawScore * smoothing;
     _attentionScore = _attentionScore.clamp(0.0, 1.0);
-
-    _camera.updateAttention(_attentionScore);
 
     // 记录历史
     _scoreHistory.add(_attentionScore);

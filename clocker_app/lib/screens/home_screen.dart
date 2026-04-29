@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/spacetime.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
 import '../providers/spacetime_provider.dart';
@@ -170,7 +171,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLossWarning(BuildContext context, dynamic st) {
+  Widget _buildLossWarning(BuildContext context, Spacetime st) {
     if (st.currentFlowRate <= 1.0) {
       return Container(
         padding: const EdgeInsets.all(14),
@@ -234,7 +235,9 @@ class HomeScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    DefaultTabController.of(context).animateTo(2);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('请在任务标签页查看'), duration: Duration(seconds: 1)),
+                    );
                   },
                   child: Text('查看全部', style: TextStyle(color: AppColors.primary, fontSize: 12)),
                 ),

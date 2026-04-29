@@ -5,7 +5,6 @@ import '../core/utils/database_factory.dart';
 import '../core/services/audio_service.dart';
 import '../core/services/screen_monitor_service.dart';
 import '../core/services/screen_monitor_factory.dart';
-import '../core/services/screen_monitor_interface.dart';
 import '../core/services/attention_monitor_service.dart';
 
 class FocusProvider extends ChangeNotifier {
@@ -95,12 +94,8 @@ class FocusProvider extends ChangeNotifier {
 
     if (_enableScreenMonitoring) {
       _screenMonitor.startMonitoring();
-      try {
-        _nativeMonitor = ScreenMonitorFactory.create();
-        _nativeMonitor!.startNativeMonitoring();
-      } catch (e) {
-        debugPrint('Native monitor error: $e');
-      }
+      _nativeMonitor = ScreenMonitorFactory.create();
+      _nativeMonitor!.startNativeMonitoring();
     }
 
     if (_enableAttentionMonitoring) {
@@ -124,6 +119,12 @@ class FocusProvider extends ChangeNotifier {
 
       if (_enableWhiteNoise && _elapsed.inSeconds > 0 && _elapsed.inSeconds % 60 == 0) {
         _audio.adjustToFlowRate(flowRate);
+      }
+
+      if (_enableAttentionMonitoring && _attentionMonitor.isInFlowState && _enableSoundEffects) {
+        if (_elapsed.inSeconds > 0 && _elapsed.inSeconds % 300 == 0) {
+          _audio.playAchievementSound();
+        }
       }
 
       notifyListeners();
@@ -154,6 +155,9 @@ class FocusProvider extends ChangeNotifier {
 
     if (_enableScreenMonitoring) _screenMonitor.startMonitoring();
     if (_nativeMonitor != null) {
+      _nativeMonitor!.startNativeMonitoring();
+    } else if (_enableScreenMonitoring) {
+      _nativeMonitor = ScreenMonitorFactory.create();
       _nativeMonitor!.startNativeMonitoring();
     }
     if (_enableAttentionMonitoring) _attentionMonitor.startMonitoring();

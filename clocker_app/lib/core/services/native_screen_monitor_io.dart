@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'screen_monitor_service.dart';
-import 'screen_monitor_interface.dart';
+import 'screen_monitor_factory.dart';
 
 ScreenMonitorInterface createScreenMonitor() => NativeScreenMonitorImpl();
 
@@ -112,7 +112,7 @@ if ($procId -gt 0) {
       final result = Process.runSync('powershell', [
         '-NoProfile',
         '-Command',
-        '(Get-Process | Where-Object {$_.MainWindowTitle -ne ""} | Select-Object -First 1).ProcessName',
+        '(Get-Process | Where-Object {\$_.MainWindowTitle -ne ""} | Select-Object -First 1).ProcessName',
       ]);
       if (result.exitCode == 0) {
         final name = result.stdout.toString().trim();
