@@ -103,23 +103,21 @@ class FocusSession {
   }
 
   factory FocusSession.fromMap(Map<String, dynamic> map) {
-    final modeIndex = map['mode'];
-    final statusIndex = map['status'];
     return FocusSession(
-      id: map['id'] as String?,
-      spacetimeId: map['spacetimeId'] as String? ?? '',
-      mode: FocusMode.values[(modeIndex is int ? modeIndex : 0).clamp(0, FocusMode.values.length - 1)],
-      status: FocusStatus.values[(statusIndex is int ? statusIndex : 0).clamp(0, FocusStatus.values.length - 1)],
-      startTime: map['startTime'] != null ? DateTime.parse(map['startTime'] as String) : DateTime.now(),
+      id: map['id'],
+      spacetimeId: map['spacetimeId'],
+      mode: FocusMode.values[map['mode'] ?? 0],
+      status: FocusStatus.values[map['status'] ?? 0],
+      startTime: DateTime.parse(map['startTime']),
       endTime:
-          map['endTime'] != null ? DateTime.parse(map['endTime'] as String) : null,
-      targetDuration: Duration(minutes: (map['targetDurationMinutes'] as num?)?.toInt() ?? 25),
-      actualDuration: Duration(minutes: (map['actualDurationMinutes'] as num?)?.toInt() ?? 0),
-      vValueEarned: (map['vValueEarned'] as num?)?.toDouble() ?? 0,
+          map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
+      targetDuration: Duration(minutes: map['targetDurationMinutes'] ?? 25),
+      actualDuration: Duration(minutes: map['actualDurationMinutes'] ?? 0),
+      vValueEarned: map['vValueEarned'] ?? 0,
       wasDistractionFree: map['wasDistractionFree'] == 1,
-      distractionCount: (map['distractionCount'] as num?)?.toInt() ?? 0,
+      distractionCount: map['distractionCount'] ?? 0,
       wasFlowState: map['wasFlowState'] == 1,
-      note: map['note'] as String?,
+      note: map['note'],
     );
   }
 }

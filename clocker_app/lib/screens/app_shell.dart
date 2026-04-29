@@ -15,10 +15,10 @@ class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
   @override
-  State<AppShell> createState() => AppShellState();
+  State<AppShell> createState() => _AppShellState();
 }
 
-class AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -28,10 +28,6 @@ class AppShellState extends State<AppShell> {
     ReportScreen(),
     SettingsScreen(),
   ];
-
-  void navigateTo(int index) {
-    setState(() => _currentIndex = index);
-  }
 
   @override
   void initState() {
