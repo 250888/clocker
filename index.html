@@ -173,9 +173,7 @@
           video.srcObject = this.stream;
           document.getElementById('camera-preview').style.display = 'block';
           this.isRunning = true;
-          console.log('Clocker: Camera started for attention monitoring');
         } catch(e) {
-          console.warn('Clocker: Camera not available:', e.message);
           this.isRunning = false;
         }
       },
@@ -190,11 +188,7 @@
       setAttention: function(score) {
         var dot = document.getElementById('attention-dot');
         if (dot) {
-          if (score > 0.6) {
-            dot.className = 'attention-indicator';
-          } else {
-            dot.className = 'attention-indicator distracted';
-          }
+          dot.className = score > 0.6 ? 'attention-indicator' : 'attention-indicator distracted';
         }
       }
     };
