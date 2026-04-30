@@ -4,7 +4,7 @@
   <base href="/clocker/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Clocker - 鐢ㄧ浉瀵硅閲嶆柊瀹氫箟鏃堕棿绠＄悊">
+  <meta name="description" content="Clocker">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Clocker">
@@ -12,237 +12,189 @@
   <link rel="manifest" href="manifest.json">
   <title>Clocker</title>
   <style>
-    body { margin:0; padding:0; overflow:hidden; background:#0a0a1a; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#0a0a1a; overflow:hidden; }
+    #loading-screen {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#0a0a1a; z-index:9999999;
+      transition: opacity 0.5s;
+    }
+    #loading-screen.fade-out { opacity:0; pointer-events:none; }
+    #loading-screen .logo {
+      font-size:48px; font-family:system-ui,-apple-system,sans-serif;
+      color:#7c4dff; font-weight:700; margin-bottom:8px;
+    }
+    #loading-screen .subtitle {
+      font-size:14px; color:rgba(255,255,255,0.4); margin-bottom:40px;
+      font-family:system-ui,-apple-system,sans-serif;
+    }
+    #loading-bar-outer {
+      width:240px; height:4px; background:rgba(255,255,255,0.08);
+      border-radius:2px; overflow:hidden;
+    }
+    #loading-bar-inner {
+      width:0%; height:100%; background:linear-gradient(90deg,#7c4dff,#e040fb);
+      border-radius:2px; transition:width 0.3s;
+    }
+    #loading-text {
+      margin-top:16px; font-size:12px; color:rgba(255,255,255,0.3);
+      font-family:system-ui,-apple-system,sans-serif;
+    }
     #camera-container {
-      position: fixed;
-      bottom: 12px;
-      right: 12px;
-      width: 160px;
-      height: 120px;
-      z-index: 2147483647;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.8);
-      border: 2px solid rgba(124,77,255,0.7);
-      display: none;
-      pointer-events: none;
-      background: #0a0a1a;
+      position:fixed; bottom:12px; right:12px; width:160px; height:120px;
+      z-index:2147483647; border-radius:12px; overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,0.8); border:2px solid rgba(124,77,255,0.7);
+      display:none; pointer-events:none; background:#0a0a1a;
     }
-    #camera-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    #camera-video { width:100%; height:100%; object-fit:cover; display:block; }
   </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <div class="logo">Clocker</div>
+    <div class="subtitle">Redefining Time Management</div>
+    <div id="loading-bar-outer"><div id="loading-bar-inner"></div></div>
+    <div id="loading-text">Initializing...</div>
+  </div>
+  <div id="camera-container">
+    <video id="camera-video" autoplay playsinline muted></video>
+  </div>
+
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(r) {
-        for (var i = 0; i < r.length; i++) r[i].unregister();
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(r){
+        for(var i=0;i<r.length;i++) r[i].unregister();
       }).catch(function(){});
-      if ('caches' in window) {
-        caches.keys().then(function(n) {
-          for (var i = 0; i < n.length; i++) caches.delete(n[i]);
+      if('caches' in window){
+        caches.keys().then(function(n){
+          for(var i=0;i<n.length;i++) caches.delete(n[i]);
         }).catch(function(){});
       }
     }
 
-    // === Camera ===
-    window.startCamera = async function() {
-      try {
-        var video = document.getElementById('camera-video');
-        var container = document.getElementById('camera-container');
-        var stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } },
-          audio: false
+    (function(){
+      var bar=document.getElementById('loading-bar-inner');
+      var txt=document.getElementById('loading-text');
+      var pct=0;
+      var iv=setInterval(function(){
+        pct+=Math.random()*6+2;
+        if(pct>85) pct=85;
+        bar.style.width=pct+'%';
+        if(pct>25) txt.textContent='Loading engine...';
+        if(pct>50) txt.textContent='Preparing UI...';
+        if(pct>75) txt.textContent='Almost ready...';
+      },400);
+      window._flutterLoadingProgress=function(p,msg){
+        if(p>pct){pct=Math.min(p,95);bar.style.width=pct+'%';}
+        if(msg) txt.textContent=msg;
+      };
+      window._flutterLoadingDone=function(){
+        clearInterval(iv);
+        bar.style.width='100%';
+        txt.textContent='Ready!';
+        setTimeout(function(){
+          document.getElementById('loading-screen').classList.add('fade-out');
+          setTimeout(function(){
+            document.getElementById('loading-screen').style.display='none';
+          },600);
+        },300);
+      };
+      setTimeout(function(){
+        if(pct<5) window._flutterLoadingDone();
+      },30000);
+    })();
+
+    window.startCamera=async function(){
+      try{
+        var v=document.getElementById('camera-video');
+        var c=document.getElementById('camera-container');
+        var s=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:'user',width:{ideal:320},height:{ideal:240}},audio:false
         });
-        video.srcObject = stream;
-        await video.play();
-        container.style.display = 'block';
-        return true;
-      } catch(e) {
-        console.warn('Camera error:', e);
-        return false;
-      }
+        v.srcObject=s;await v.play();c.style.display='block';return true;
+      }catch(e){console.warn('Camera:',e);return false;}
     };
-    window.stopCamera = function() {
-      var video = document.getElementById('camera-video');
-      var container = document.getElementById('camera-container');
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(function(t) { t.stop(); });
-        video.srcObject = null;
-      }
-      container.style.display = 'none';
+    window.stopCamera=function(){
+      var v=document.getElementById('camera-video');
+      var c=document.getElementById('camera-container');
+      if(v.srcObject){v.srcObject.getTracks().forEach(function(t){t.stop();});v.srcObject=null;}
+      c.style.display='none';
     };
-    window.setCameraOpacity = function(v) {
-      var c = document.getElementById('camera-container');
-      if (c) c.style.opacity = v;
+    window.setCameraOpacity=function(v){
+      var c=document.getElementById('camera-container');if(c) c.style.opacity=v;
     };
-    window.setCameraMirror = function(m) {
-      var v = document.getElementById('camera-video');
-      if (v) v.style.transform = m ? 'scaleX(-1)' : 'scaleX(1)';
+    window.setCameraMirror=function(m){
+      var v=document.getElementById('camera-video');if(v) v.style.transform=m?'scaleX(-1)':'scaleX(1)';
     };
 
-    // === Web Audio API White Noise ===
-    var _audioCtx = null;
-    var _noiseSource = null;
-    var _noiseGain = null;
-    var _noiseFilter = null;
-    var _noiseFilter2 = null;
-
-    function _getAudioCtx() {
-      if (!_audioCtx) {
-        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (_audioCtx.state === 'suspended') {
-        _audioCtx.resume();
-      }
-      return _audioCtx;
+    var _ac=null,_ns=null,_ng=null,_nf1=null,_nf2=null;
+    function _getAC(){
+      if(!_ac) _ac=new(window.AudioContext||window.webkitAudioContext)();
+      if(_ac.state==='suspended') _ac.resume();
+      return _ac;
     }
-
-    function _createNoiseBuffer(ctx, type) {
-      var sr = ctx.sampleRate;
-      var len = sr * 4;
-      var buf = ctx.createBuffer(2, len, sr);
-      for (var ch = 0; ch < 2; ch++) {
-        var data = buf.getChannelData(ch);
-        for (var i = 0; i < len; i++) {
-          data[i] = Math.random() * 2 - 1;
-        }
-      }
+    function _mkBuf(ctx){
+      var sr=ctx.sampleRate,len=sr*4,buf=ctx.createBuffer(2,len,sr);
+      for(var ch=0;ch<2;ch++){var d=buf.getChannelData(ch);for(var i=0;i<len;i++) d[i]=Math.random()*2-1;}
       return buf;
     }
-
-    window.startWhiteNoise = function(soundId, volume) {
-      try {
-        var ctx = _getAudioCtx();
-        if (ctx.state === 'suspended') ctx.resume();
-
-        if (_noiseSource) {
-          try { _noiseSource.stop(); } catch(e) {}
-          _noiseSource = null;
-        }
-        if (_noiseFilter) { try { _noiseFilter.disconnect(); } catch(e) {} }
-        if (_noiseFilter2) { try { _noiseFilter2.disconnect(); } catch(e) {} }
-        if (_noiseGain) { try { _noiseGain.disconnect(); } catch(e) {} }
-
-        var buf = _createNoiseBuffer(ctx, soundId);
-        _noiseSource = ctx.createBufferSource();
-        _noiseSource.buffer = buf;
-        _noiseSource.loop = true;
-
-        _noiseGain = ctx.createGain();
-        _noiseGain.gain.value = volume;
-
-        _noiseFilter = ctx.createBiquadFilter();
-        _noiseFilter2 = ctx.createBiquadFilter();
-
-        switch(soundId) {
+    window.startWhiteNoise=function(sid,vol){
+      try{
+        var ctx=_getAC();
+        if(_ns){try{_ns.stop();}catch(e){}_ns=null;}
+        if(_nf1){try{_nf1.disconnect();}catch(e){}}
+        if(_nf2){try{_nf2.disconnect();}catch(e){}}
+        if(_ng){try{_ng.disconnect();}catch(e){}}
+        var buf=_mkBuf(ctx);
+        _ns=ctx.createBufferSource();_ns.buffer=buf;_ns.loop=true;
+        _ng=ctx.createGain();_ng.gain.value=vol;
+        _nf1=ctx.createBiquadFilter();_nf2=ctx.createBiquadFilter();
+        switch(sid){
           case 'rain':
-            _noiseFilter.type = 'bandpass';
-            _noiseFilter.frequency.value = 2500;
-            _noiseFilter.Q.value = 0.5;
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseGain);
-            break;
+            _nf1.type='bandpass';_nf1.frequency.value=2500;_nf1.Q.value=0.5;
+            _ns.connect(_nf1);_nf1.connect(_ng);break;
           case 'fire':
-            _noiseFilter.type = 'lowpass';
-            _noiseFilter.frequency.value = 600;
-            _noiseFilter.Q.value = 1.0;
-            _noiseFilter2.type = 'highpass';
-            _noiseFilter2.frequency.value = 80;
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseFilter2);
-            _noiseFilter2.connect(_noiseGain);
-            break;
+            _nf1.type='lowpass';_nf1.frequency.value=600;_nf1.Q.value=1.0;
+            _nf2.type='highpass';_nf2.frequency.value=80;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
           case 'ocean':
-            _noiseFilter.type = 'lowpass';
-            _noiseFilter.frequency.value = 800;
-            _noiseFilter.Q.value = 0.8;
-            var lfo = ctx.createOscillator();
-            var lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.12;
-            lfoGain.gain.value = 400;
-            lfo.connect(lfoGain);
-            lfoGain.connect(_noiseFilter.frequency);
-            lfo.start();
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseGain);
-            break;
+            _nf1.type='lowpass';_nf1.frequency.value=800;_nf1.Q.value=0.8;
+            var lfo=ctx.createOscillator(),lg=ctx.createGain();
+            lfo.frequency.value=0.12;lg.gain.value=400;
+            lfo.connect(lg);lg.connect(_nf1.frequency);lfo.start();
+            _ns.connect(_nf1);_nf1.connect(_ng);break;
           case 'wind':
-            _noiseFilter.type = 'bandpass';
-            _noiseFilter.frequency.value = 400;
-            _noiseFilter.Q.value = 0.3;
-            _noiseFilter2.type = 'lowpass';
-            _noiseFilter2.frequency.value = 1200;
-            var windLfo = ctx.createOscillator();
-            var windGain = ctx.createGain();
-            windLfo.frequency.value = 0.08;
-            windGain.gain.value = 300;
-            windLfo.connect(windGain);
-            windGain.connect(_noiseFilter.frequency);
-            windLfo.start();
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseFilter2);
-            _noiseFilter2.connect(_noiseGain);
-            break;
+            _nf1.type='bandpass';_nf1.frequency.value=400;_nf1.Q.value=0.3;
+            _nf2.type='lowpass';_nf2.frequency.value=1200;
+            var wl=ctx.createOscillator(),wg=ctx.createGain();
+            wl.frequency.value=0.08;wg.gain.value=300;
+            wl.connect(wg);wg.connect(_nf1.frequency);wl.start();
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
           case 'forest':
-            _noiseFilter.type = 'bandpass';
-            _noiseFilter.frequency.value = 6000;
-            _noiseFilter.Q.value = 2.0;
-            _noiseFilter2.type = 'lowpass';
-            _noiseFilter2.frequency.value = 8000;
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseFilter2);
-            _noiseFilter2.connect(_noiseGain);
-            break;
+            _nf1.type='bandpass';_nf1.frequency.value=6000;_nf1.Q.value=2.0;
+            _nf2.type='lowpass';_nf2.frequency.value=8000;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
           case 'cafe':
-            _noiseFilter.type = 'bandpass';
-            _noiseFilter.frequency.value = 1500;
-            _noiseFilter.Q.value = 0.6;
-            _noiseFilter2.type = 'lowpass';
-            _noiseFilter2.frequency.value = 3000;
-            _noiseSource.connect(_noiseFilter);
-            _noiseFilter.connect(_noiseFilter2);
-            _noiseFilter2.connect(_noiseGain);
-            break;
-          default:
-            _noiseSource.connect(_noiseGain);
+            _nf1.type='bandpass';_nf1.frequency.value=1500;_nf1.Q.value=0.6;
+            _nf2.type='lowpass';_nf2.frequency.value=3000;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
+          default: _ns.connect(_ng);
         }
-
-        _noiseGain.connect(ctx.destination);
-        _noiseSource.start(0);
-        return true;
-      } catch(e) {
-        console.warn('White noise error:', e);
-        return false;
-      }
+        _ng.connect(ctx.destination);_ns.start(0);return true;
+      }catch(e){console.warn('Noise:',e);return false;}
     };
-
-    window.stopWhiteNoise = function() {
-      try {
-        if (_noiseSource) { _noiseSource.stop(); _noiseSource = null; }
-        if (_noiseFilter) { _noiseFilter.disconnect(); _noiseFilter = null; }
-        if (_noiseFilter2) { _noiseFilter2.disconnect(); _noiseFilter2 = null; }
-        if (_noiseGain) { _noiseGain.disconnect(); _noiseGain = null; }
-      } catch(e) {}
+    window.stopWhiteNoise=function(){
+      try{
+        if(_ns){_ns.stop();_ns=null;}
+        if(_nf1){_nf1.disconnect();_nf1=null;}
+        if(_nf2){_nf2.disconnect();_nf2=null;}
+        if(_ng){_ng.disconnect();_ng=null;}
+      }catch(e){}
     };
-
-    window.setNoiseVolume = function(v) {
-      if (_noiseGain) {
-        try { _noiseGain.gain.value = v; } catch(e) {}
-      }
-    };
-
-    window.isNoisePlaying = function() {
-      return _noiseSource != null;
-    };
+    window.setNoiseVolume=function(v){if(_ng){try{_ng.gain.value=v;}catch(e){}}};
+    window.isNoisePlaying=function(){return _ns!=null;};
   </script>
-</head>
-<body>
-  <div id="camera-container">
-    <video id="camera-video" autoplay playsinline muted></video>
-  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
