@@ -7,170 +7,175 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0A0A1A;
-      color: #E8E8F0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #0A0A1A; color: #E8E8F0; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
     }
-    .container {
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
+    .header {
+      width: 100%; padding: 40px 20px 30px; text-align: center;
+      background: linear-gradient(135deg, #6C5CE7 0%, #A29BFE 50%, #00CEC9 100%);
     }
-    .logo {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      font-size: 32px;
-      background: linear-gradient(135deg, #6C5CE7, #00CEC9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-    .subtitle {
-      color: #8888AA;
-      font-size: 14px;
-      margin-bottom: 40px;
-    }
+    .header .logo { font-size: 48px; margin-bottom: 12px; }
+    .header h1 { font-size: 32px; font-weight: bold; color: white; letter-spacing: 2px; }
+    .header .subtitle { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px; }
+    .header .slogan { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 4px; }
+    .content { max-width: 800px; width: 100%; padding: 40px 20px; }
+    .download-section { margin-bottom: 40px; }
+    .download-section h2 { font-size: 20px; color: #A29BFE; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .download-card {
-      background: #1A1A2E;
-      border: 1px solid rgba(108, 92, 231, 0.3);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 16px;
-      transition: transform 0.2s, border-color 0.2s;
+      background: #1A1A2E; border: 1px solid #2A2A4A; border-radius: 16px;
+      padding: 24px; margin-bottom: 16px; transition: border-color 0.2s;
     }
-    .download-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(108, 92, 231, 0.6);
+    .download-card:hover { border-color: #6C5CE7; }
+    .download-card .platform { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .download-card .platform-icon { font-size: 36px; }
+    .download-card .platform-info h3 { font-size: 18px; color: #E8E8F0; }
+    .download-card .platform-info p { font-size: 13px; color: #888; margin-top: 4px; }
+    .download-card .btn {
+      display: inline-block; padding: 12px 28px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
+      transition: all 0.2s; cursor: pointer; border: none;
     }
-    .download-card .icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-    }
-    .download-card h2 {
-      font-size: 18px;
-      margin-bottom: 6px;
-    }
-    .download-card .desc {
-      color: #8888AA;
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
-    .download-btn {
-      display: inline-block;
-      padding: 10px 28px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    .download-btn.primary {
-      background: linear-gradient(135deg, #6C5CE7, #A29BFE);
-      color: white;
-    }
-    .download-btn.primary:hover {
-      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
-    }
-    .download-btn.secondary {
-      background: rgba(108, 92, 231, 0.15);
-      color: #A29BFE;
-      border: 1px solid rgba(108, 92, 231, 0.3);
-    }
-    .download-btn.secondary:hover {
-      background: rgba(108, 92, 231, 0.25);
-    }
-    .web-link {
-      margin-top: 24px;
-      padding: 16px;
-      background: rgba(0, 206, 201, 0.1);
-      border: 1px solid rgba(0, 206, 201, 0.3);
-      border-radius: 12px;
-    }
-    .web-link a {
-      color: #00CEC9;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .web-link a:hover {
-      text-decoration: underline;
-    }
+    .btn-primary { background: #6C5CE7; color: white; }
+    .btn-primary:hover { background: #5B4BD5; transform: translateY(-1px); }
+    .btn-secondary { background: #2A2A4A; color: #A29BFE; border: 1px solid #3A3A5A; }
+    .btn-secondary:hover { background: #3A3A5A; }
+    .btn-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
     .features {
-      margin-top: 32px;
-      text-align: left;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px; margin-top: 32px;
     }
-    .features h3 {
-      font-size: 14px;
-      color: #A29BFE;
-      margin-bottom: 12px;
+    .feature-card {
+      background: #1A1A2E; border: 1px solid #2A2A4A; border-radius: 12px;
+      padding: 20px; text-align: center;
     }
-    .feature-item {
-      display: flex;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 13px;
-      color: #8888AA;
+    .feature-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .feature-card h4 { font-size: 14px; color: #E8E8F0; margin-bottom: 4px; }
+    .feature-card p { font-size: 12px; color: #888; }
+    .web-link {
+      text-align: center; margin: 32px 0; padding: 24px;
+      background: linear-gradient(135deg, rgba(108,92,231,0.15), rgba(0,206,201,0.15));
+      border-radius: 16px; border: 1px solid #2A2A4A;
     }
-    .feature-item span {
-      margin-right: 8px;
-      font-size: 16px;
+    .web-link p { font-size: 14px; color: #A29BFE; margin-bottom: 12px; }
+    .footer { text-align: center; padding: 32px 20px; color: #555; font-size: 12px; }
+    .footer a { color: #6C5CE7; text-decoration: none; }
+    .version-tag {
+      display: inline-block; padding: 2px 8px; background: #2A2A4A;
+      border-radius: 4px; font-size: 11px; color: #888; margin-left: 8px;
     }
-    .footer {
-      margin-top: 40px;
-      font-size: 11px;
-      color: #555577;
+    .size-tag {
+      display: inline-block; padding: 2px 8px; background: rgba(0,206,201,0.15);
+      border-radius: 4px; font-size: 11px; color: #00CEC9; margin-left: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="header">
     <div class="logo">⏰</div>
     <h1>Clocker</h1>
-    <p class="subtitle">用狭义相对论，根治拖延症<br>你的行动速度，决定你的时间流速</p>
+    <div class="subtitle">你才是钟 — 用狭义相对论，根治拖延症</div>
+    <div class="slogan">你的行动速度，决定你的时间流速</div>
+  </div>
 
-    <div class="download-card">
-      <div class="icon">🖥️</div>
-      <h2>Windows 桌面版</h2>
-      <p class="desc">支持屏幕监控 · 前台窗口检测 · PowerShell + Win32 API</p>
-      <a class="download-btn primary" href="clocker-windows.zip">
-        下载 Windows 版
-      </a>
-    </div>
-
-    <div class="download-card">
-      <div class="icon">📱</div>
-      <h2>Android 安卓版</h2>
-      <p class="desc">支持摄像头注意力检测 · 应用使用监控 · 通知提醒</p>
-      <a class="download-btn secondary" href="https://github.com/250888/clocker/releases/latest/download/clocker-android.apk">
-        下载 APK
-      </a>
-    </div>
-
+  <div class="content">
     <div class="web-link">
-      🌐 无需下载，直接在浏览器中使用：<br>
-      <a href="https://250888.github.io/clocker/">https://250888.github.io/clocker/</a>
+      <p>不想下载？直接在浏览器中使用</p>
+      <a href="./" class="btn btn-primary">打开网页版</a>
     </div>
 
-    <div class="features">
-      <h3>核心功能</h3>
-      <div class="feature-item"><span>🎵</span> 6种程序生成白噪音（雨声、炉火、海浪、微风、森林、咖啡馆）</div>
-      <div class="feature-item"><span>🔔</span> 专注完成/分心/成就提示音（C-E-G和弦、200Hz警告、上升音阶）</div>
-      <div class="feature-item"><span>🖥️</span> Windows屏幕监控（GetForegroundWindow + 进程分类）</div>
-      <div class="feature-item"><span>👁️</span> 视觉注意力监控（摄像头检测、心流状态、注意力分数）</div>
-      <div class="feature-item"><span>⏱️</span> 番茄钟 + 洛伦兹变换时间膨胀引擎</div>
-      <div class="feature-item"><span>📊</span> 效率比、分心统计、心流检测</div>
+    <div class="download-section">
+      <h2>📥 下载客户端</h2>
+
+      <div class="download-card">
+        <div class="platform">
+          <div class="platform-icon">🪟</div>
+          <div class="platform-info">
+            <h3>Windows <span class="version-tag">v1.0.0</span></h3>
+            <p>支持 Windows 10/11，包含屏幕监控、摄像头注意力检测、音效生成</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <a href="https://github.com/250888/clocker/releases/download/v1.0.0/clocker-windows.zip" class="btn btn-primary">
+            ⬇ 下载 Windows 版 <span class="size-tag">~30MB</span>
+          </a>
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-secondary">查看所有版本</a>
+        </div>
+      </div>
+
+      <div class="download-card">
+        <div class="platform">
+          <div class="platform-icon">🤖</div>
+          <div class="platform-info">
+            <h3>Android <span class="version-tag">v1.0.0</span></h3>
+            <p>支持 Android 6.0+，包含摄像头注意力检测、白噪音、专注计时</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <a href="https://github.com/250888/clocker/releases/download/v1.0.0/clocker-android.apk" class="btn btn-primary">
+            ⬇ 下载 APK <span class="size-tag">~25MB</span>
+          </a>
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-secondary">查看所有版本</a>
+        </div>
+      </div>
     </div>
 
-    <div class="footer">
-      Clocker v1.0.0 · GitHub: <a href="https://github.com/250888/clocker" style="color:#6C5CE7">250888/clocker</a>
+    <div class="download-section">
+      <h2>✨ 功能特性</h2>
+      <div class="features">
+        <div class="feature-card">
+          <div class="icon">🧬</div>
+          <h4>洛伦兹时间引擎</h4>
+          <p>基于狭义相对论的时间膨胀算法</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🎵</div>
+          <h4>程序生成音效</h4>
+          <p>6种白噪音 + 4种提示音</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📸</div>
+          <h4>摄像头注意力</h4>
+          <p>实时人脸检测和注意力监控</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🖥️</div>
+          <h4>屏幕监控</h4>
+          <p>自动区分生产性/娱乐应用</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⚡</div>
+          <h4>心流状态检测</h4>
+          <p>连续15分钟+高注意力自动检测</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📊</div>
+          <h4>数据报告</h4>
+          <p>7天/30天趋势分析和效率报告</p>
+        </div>
+      </div>
     </div>
+
+    <div class="download-section">
+      <h2>🔧 开发者信息</h2>
+      <div class="download-card">
+        <p style="color: #888; font-size: 13px; line-height: 1.8;">
+          <strong style="color: #E8E8F0;">技术栈：</strong>Flutter 3.x + Provider + sqflite<br>
+          <strong style="color: #E8E8F0;">开源地址：</strong><a href="https://github.com/250888/clocker" style="color: #6C5CE7;">github.com/250888/clocker</a><br>
+          <strong style="color: #E8E8F0;">构建方式：</strong>Flutter Web (CanvasKit) + Windows Desktop<br>
+          <strong style="color: #E8E8F0;">隐私说明：</strong>所有监控功能均为可选，数据仅存储在本地
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Clocker &copy; 2025 | 用狭义相对论，根治拖延症</p>
+    <p style="margin-top: 8px;">
+      <a href="./">网页版</a> ·
+      <a href="https://github.com/250888/clocker">GitHub</a> ·
+      <a href="https://github.com/250888/clocker/releases">Releases</a>
+    </p>
   </div>
 </body>
 </html>
