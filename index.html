@@ -20,17 +20,18 @@
     }
     #camera-container {
       position: fixed;
-      top: 8px;
+      top: 60px;
       right: 8px;
-      width: 160px;
-      height: 120px;
-      z-index: 10000;
+      width: 180px;
+      height: 135px;
+      z-index: 999999;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      border: 2px solid rgba(124,77,255,0.4);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+      border: 2px solid rgba(124,77,255,0.6);
       display: none;
       pointer-events: none;
+      background: #0a0a1a;
     }
     #camera-video {
       width: 100%;
@@ -59,6 +60,7 @@
           audio: false
         });
         video.srcObject = stream;
+        await video.play();
         container.style.display = 'block';
         return true;
       } catch(e) {
