@@ -64,9 +64,16 @@
       display: inline-block; padding: 2px 8px; background: #2A2A4A;
       border-radius: 4px; font-size: 11px; color: #888; margin-left: 8px;
     }
-    .size-tag {
-      display: inline-block; padding: 2px 8px; background: rgba(0,206,201,0.15);
-      border-radius: 4px; font-size: 11px; color: #00CEC9; margin-left: 8px;
+    .build-steps {
+      background: #12121E; border-radius: 8px; padding: 16px; margin-top: 12px;
+      font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; color: #A0A0C0;
+      line-height: 1.8; overflow-x: auto;
+    }
+    .build-steps code { color: #00CEC9; }
+    .build-steps .comment { color: #555; }
+    .badge-soon {
+      display: inline-block; padding: 3px 10px; background: rgba(255,165,0,0.2);
+      border-radius: 6px; font-size: 12px; color: #FFA500; margin-left: 8px;
     }
   </style>
 </head>
@@ -91,15 +98,22 @@
         <div class="platform">
           <div class="platform-icon">🪟</div>
           <div class="platform-info">
-            <h3>Windows <span class="version-tag">v1.0.0</span></h3>
+            <h3>Windows <span class="badge-soon">即将发布</span></h3>
             <p>支持 Windows 10/11，包含屏幕监控、摄像头注意力检测、音效生成</p>
           </div>
         </div>
         <div class="btn-row">
-          <a href="https://github.com/250888/clocker/releases/download/v1.0.0/clocker-windows.zip" class="btn btn-primary">
-            ⬇ 下载 Windows 版 <span class="size-tag">~30MB</span>
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-primary">
+            前往 Releases 页面
           </a>
-          <a href="https://github.com/250888/clocker/releases" class="btn btn-secondary">查看所有版本</a>
+          <a href="https://github.com/250888/clocker" class="btn btn-secondary">查看源码</a>
+        </div>
+        <div class="build-steps">
+          <span class="comment"># 自行构建 Windows 版本</span><br>
+          <code>git clone https://github.com/250888/clocker.git</code><br>
+          <code>cd clocker/clocker_app</code><br>
+          <code>flutter build windows --release</code><br>
+          <span class="comment"># 输出: build/windows/x64/runner/Release/</span>
         </div>
       </div>
 
@@ -107,15 +121,22 @@
         <div class="platform">
           <div class="platform-icon">🤖</div>
           <div class="platform-info">
-            <h3>Android <span class="version-tag">v1.0.0</span></h3>
+            <h3>Android <span class="badge-soon">即将发布</span></h3>
             <p>支持 Android 6.0+，包含摄像头注意力检测、白噪音、专注计时</p>
           </div>
         </div>
         <div class="btn-row">
-          <a href="https://github.com/250888/clocker/releases/download/v1.0.0/clocker-android.apk" class="btn btn-primary">
-            ⬇ 下载 APK <span class="size-tag">~25MB</span>
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-primary">
+            前往 Releases 页面
           </a>
-          <a href="https://github.com/250888/clocker/releases" class="btn btn-secondary">查看所有版本</a>
+          <a href="https://github.com/250888/clocker" class="btn btn-secondary">查看源码</a>
+        </div>
+        <div class="build-steps">
+          <span class="comment"># 自行构建 Android 版本</span><br>
+          <code>git clone https://github.com/250888/clocker.git</code><br>
+          <code>cd clocker/clocker_app</code><br>
+          <code>flutter build apk --release</code><br>
+          <span class="comment"># 输出: build/app/outputs/flutter-apk/app-release.apk</span>
         </div>
       </div>
     </div>
@@ -162,7 +183,7 @@
         <p style="color: #888; font-size: 13px; line-height: 1.8;">
           <strong style="color: #E8E8F0;">技术栈：</strong>Flutter 3.x + Provider + sqflite<br>
           <strong style="color: #E8E8F0;">开源地址：</strong><a href="https://github.com/250888/clocker" style="color: #6C5CE7;">github.com/250888/clocker</a><br>
-          <strong style="color: #E8E8F0;">构建方式：</strong>Flutter Web (CanvasKit) + Windows Desktop<br>
+          <strong style="color: #E8E8F0;">构建方式：</strong>Flutter Web + Windows Desktop + Android<br>
           <strong style="color: #E8E8F0;">隐私说明：</strong>所有监控功能均为可选，数据仅存储在本地
         </p>
       </div>
