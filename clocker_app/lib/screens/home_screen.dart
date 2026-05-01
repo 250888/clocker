@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/spacetime.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
+import '../models/spacetime.dart';
 import '../providers/spacetime_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/achievement_provider.dart';
@@ -160,8 +160,6 @@ class HomeScreen extends StatelessWidget {
                   _buildMiniTasks(context),
                   const SizedBox(height: 16),
                   _buildRecentAchievements(context),
-                  const SizedBox(height: 24),
-                  _buildQuickActions(context),
                 ],
               ),
             ),
@@ -235,9 +233,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('请在任务标签页查看'), duration: Duration(seconds: 1)),
-                    );
+                    DefaultTabController.of(context).animateTo(2);
                   },
                   child: Text('查看全部', style: TextStyle(color: AppColors.primary, fontSize: 12)),
                 ),
@@ -281,75 +277,6 @@ class HomeScreen extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '快捷操作',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildActionChip(
-              context,
-              Icons.ac_unit,
-              '时空冻结',
-              AppColors.info,
-              () {
-                context.read<SpacetimeProvider>().useTimeFreeze();
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildActionChip(
-              context,
-              Icons.history,
-              '时间回溯',
-              AppColors.cosmic4,
-              () {
-                context.read<SpacetimeProvider>().useTimeRewind();
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionChip(
-    BuildContext context,
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

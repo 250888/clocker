@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../core/constants/app_colors.dart';
+import '../models/spacetime.dart';
 import '../providers/spacetime_provider.dart';
 import '../core/utils/duration_formatter.dart';
 
@@ -40,7 +41,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCards(BuildContext context, dynamic st) {
+  Widget _buildSummaryCards(BuildContext context, Spacetime st) {
     return Row(
       children: [
         Expanded(
@@ -115,7 +116,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFlowRateChart(BuildContext context, dynamic st, SpacetimeProvider provider) {
+  Widget _buildFlowRateChart(BuildContext context, Spacetime st, SpacetimeProvider provider) {
     final engine = provider.getEngine()!;
 
     final dataPoints = <FlSpot>[];
@@ -216,10 +217,10 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDisciplineBreakdown(BuildContext context, dynamic st, SpacetimeProvider provider) {
+  Widget _buildDisciplineBreakdown(BuildContext context, Spacetime st, SpacetimeProvider provider) {
     final discipline = st.disciplinePercentage;
     final focusRatio = st.totalFocusHours > 0
-        ? (st.totalFocusHours / (st.totalFocusHours + st.totalScreenPenalty)).clamp(0, 1)
+        ? (st.totalFocusHours / (st.totalFocusHours + st.totalScreenPenalty)).clamp(0.0, 1.0)
         : 0.0;
     final engine = provider.getEngine()!;
 
@@ -247,7 +248,7 @@ class ReportScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _buildProgressBar('专注占比', focusRatio, AppColors.primary),
           const SizedBox(height: 10),
-          _buildProgressBar('任务完成率', st.totalTaskValue > 0 ? (st.totalTaskValue / (st.totalFocusHours + st.totalTaskValue)).clamp(0, 1) : 0, AppColors.accent),
+          _buildProgressBar('任务完成率', st.totalTaskValue > 0 ? (st.totalTaskValue / (st.totalFocusHours + st.totalTaskValue)).clamp(0.0, 1.0) : 0.0, AppColors.accent),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -300,7 +301,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInsights(BuildContext context, dynamic st) {
+  Widget _buildInsights(BuildContext context, Spacetime st) {
     final insights = <Map<String, dynamic>>[];
 
     if (st.disciplinePercentage >= 0.6) {

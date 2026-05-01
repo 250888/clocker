@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
-import '../core/engine/lorentz_engine.dart';
 import '../providers/settings_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../widgets/achievement_badge.dart';
@@ -23,11 +22,6 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(context, '核心参数'),
-                _buildV0Setting(context, settings),
-                _buildCSetting(context, settings),
-                _buildFlowModeSetting(context, settings),
-                const SizedBox(height: 20),
                 _buildSectionTitle(context, '番茄钟设置'),
                 _buildPomodoroDurationSetting(context, settings),
                 const SizedBox(height: 20),
@@ -60,121 +54,6 @@ class SettingsScreen extends StatelessWidget {
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColors.primaryLight,
             ),
-      ),
-    );
-  }
-
-  Widget _buildV0Setting(BuildContext context, SettingsProvider settings) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-              Text('惩罚基准流速 V₀', style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-              Text('${settings.settings.defaultV0.toStringAsFixed(1)}x',
-                  style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Slider(
-            value: settings.settings.defaultV0,
-            min: 1.0,
-            max: 5.0,
-            divisions: 8,
-            onChanged: (v) => settings.setDefaultV0(v),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCSetting(BuildContext context, SettingsProvider settings) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-              Text('自律极限 c (小时/天)', style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-              Text('${settings.settings.defaultC.toStringAsFixed(0)}h',
-                  style: TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Slider(
-            value: settings.settings.defaultC,
-            min: 2.0,
-            max: 16.0,
-            divisions: 14,
-            onChanged: (v) => settings.setDefaultC(v),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFlowModeSetting(BuildContext context, SettingsProvider settings) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('默认流速模式', style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildModeOption(settings, '相对论', FlowMode.relativistic),
-              const SizedBox(width: 6),
-              _buildModeOption(settings, '线性', FlowMode.linear),
-              const SizedBox(width: 6),
-              _buildModeOption(settings, '指数', FlowMode.exponential),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeOption(SettingsProvider settings, String label, FlowMode mode) {
-    final isSelected = settings.settings.defaultFlowMode == mode;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => settings.setDefaultFlowMode(mode),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(8),
-            border: isSelected ? Border.all(color: AppColors.primary) : null,
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? AppColors.primary : AppColors.textHint,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -230,18 +109,7 @@ class SettingsScreen extends StatelessWidget {
             settings.settings.enableCameraMonitoring,
             (v) => settings.toggleCameraMonitoring(v),
           ),
-          _buildSwitchTile(
-            '环境音监控',
-            '麦克风，本地计算',
-            settings.settings.enableMicrophoneMonitoring,
-            (v) => settings.toggleMicrophoneMonitoring(v),
-          ),
-          _buildSwitchTile(
-            '运动状态监控',
-            '手机陀螺仪',
-            settings.settings.enableMotionMonitoring,
-            (v) => settings.toggleMotionMonitoring(v),
-          ),
+
         ],
       ),
     );

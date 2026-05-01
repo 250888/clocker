@@ -63,7 +63,29 @@ class _AppEntryState extends State<_AppEntry> {
 
   Future<void> _initApp() async {
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      final settingsProvider = context.read<SettingsProvider>();
+      final spacetimeProvider = context.read<SpacetimeProvider>();
+      final taskProvider = context.read<TaskProvider>();
+      final focusProvider = context.read<FocusProvider>();
+      final achievementProvider = context.read<AchievementProvider>();
+
+      await Future.wait([
+        settingsProvider.loadSettings(),
+        spacetimeProvider.loadSpacetimes(),
+        achievementProvider.loadAchievements(),
+      ]);
+
+      if (spacetimeProvider.activeSpacetime != null) {
+        await taskProvider.loadTasks(spacetimeProvider.activeSpacetime!.id);
+      }
+
+      focusProvider.configure(
+        enableWhiteNoise: settingsProvider.settings.enableWhiteNoise,
+        enableScreenMonitoring: settingsProvider.settings.enableScreenMonitoring,
+        enableCamera: settingsProvider.settings.enableCameraMonitoring,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
         setState(() => _initialized = true);
       }

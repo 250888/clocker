@@ -47,5 +47,16 @@ app.*.map.json
 # Large files
 Android Studio 2025/
 *.zip.xltd
+*.zip.xltd.cfg
 *.zip
 _gh_pages_deploy/
+
+# Temp Gradle home
+.gradle_temp/
+
+# Build helper scripts
+build-android-apk.bat
+build-android-apk.ps1
+cleanup-gradle.bat
+fix-sdk-structure.bat
+install-android-sdk.bat

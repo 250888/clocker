@@ -6,6 +6,7 @@ import '../core/services/audio_service.dart';
 import '../core/services/screen_monitor_service.dart';
 import '../core/services/screen_monitor_factory.dart';
 import '../core/services/attention_monitor_service.dart';
+import '../core/services/web_camera_service.dart';
 
 class FocusProvider extends ChangeNotifier {
   FocusSession? _currentSession;
@@ -18,16 +19,17 @@ class FocusProvider extends ChangeNotifier {
   int _distractionCount = 0;
   final DatabaseHelperInterface _db = DatabaseFactory.create();
 
-  final AudioService _audio = AudioService();
+  final AudioService _audioService = AudioService();
   final ScreenMonitorService _screenMonitor = ScreenMonitorService();
   final AttentionMonitorService _attentionMonitor = AttentionMonitorService();
+  final WebCameraService _cameraService = WebCameraService.instance;
   ScreenMonitorInterface? _nativeMonitor;
 
-  bool _enableSoundEffects = false;
-  bool _enableWhiteNoise = false;
-  bool _enableScreenMonitoring = false;
-  bool _enableAttentionMonitoring = false;
-  String _whiteNoiseType = 'rain';
+  bool _enableWhiteNoise = true;
+  bool _enableScreenMonitoring = true;
+  bool _enableAttentionMonitoring = true;
+  bool _enableCamera = true;
+  String _selectedNoise = 'rain';
 
   FocusSession? get currentSession => _currentSession;
   Duration get elapsed => _elapsed;
@@ -36,34 +38,27 @@ class FocusProvider extends ChangeNotifier {
   bool get isRunning => _isRunning;
   bool get isPaused => _isPaused;
   int get distractionCount => _distractionCount;
-  Duration get remaining => _targetDuration - _elapsed;
-  double get progress => _targetDuration.inSeconds > 0
-      ? _elapsed.inSeconds / _targetDuration.inSeconds
-      : 0.0;
+  Duration get remaining {
+    final r = _targetDuration - _elapsed;
+    return r.isNegative ? Duration.zero : r;
+  }
+  double get progress {
+    if (_targetDuration.inSeconds <= 0) return 0.0;
+    return (_elapsed.inSeconds / _targetDuration.inSeconds).clamp(0.0, 1.0);
+  }
 
-  AudioService get audio => _audio;
+  AudioService get audioService => _audioService;
   ScreenMonitorService get screenMonitor => _screenMonitor;
   AttentionMonitorService get attentionMonitor => _attentionMonitor;
+  WebCameraService get cameraService => _cameraService;
 
-  bool get enableSoundEffects => _enableSoundEffects;
   bool get enableWhiteNoise => _enableWhiteNoise;
   bool get enableScreenMonitoring => _enableScreenMonitoring;
   bool get enableAttentionMonitoring => _enableAttentionMonitoring;
-  String get whiteNoiseType => _whiteNoiseType;
-
-  void configure({
-    bool? soundEffects,
-    bool? whiteNoise,
-    bool? screenMonitoring,
-    bool? attentionMonitoring,
-    String? noiseType,
-  }) {
-    if (soundEffects != null) _enableSoundEffects = soundEffects;
-    if (whiteNoise != null) _enableWhiteNoise = whiteNoise;
-    if (screenMonitoring != null) _enableScreenMonitoring = screenMonitoring;
-    if (attentionMonitoring != null) _enableAttentionMonitoring = attentionMonitoring;
-    if (noiseType != null) _whiteNoiseType = noiseType;
-  }
+  bool get enableCamera => _enableCamera;
+  String get selectedNoise => _selectedNoise;
+  double get volume => _audioService.volume;
+  bool get isCameraActive => _cameraService.isActive;
 
   void setMode(FocusMode mode) {
     _selectedMode = mode;
@@ -75,7 +70,22 @@ class FocusProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startFocus(String spacetimeId, {double flowRate = 1.0}) {
+  void configure({
+    bool? enableWhiteNoise,
+    bool? enableScreenMonitoring,
+    bool? enableAttentionMonitoring,
+    bool? enableCamera,
+    String? selectedNoise,
+  }) {
+    if (enableWhiteNoise != null) _enableWhiteNoise = enableWhiteNoise;
+    if (enableScreenMonitoring != null) _enableScreenMonitoring = enableScreenMonitoring;
+    if (enableAttentionMonitoring != null) _enableAttentionMonitoring = enableAttentionMonitoring;
+    if (enableCamera != null) _enableCamera = enableCamera;
+    if (selectedNoise != null) _selectedNoise = selectedNoise;
+    notifyListeners();
+  }
+
+  void startFocus(String spacetimeId) {
     _currentSession = FocusSession(
       spacetimeId: spacetimeId,
       mode: _selectedMode,
@@ -87,46 +97,10 @@ class FocusProvider extends ChangeNotifier {
     _isPaused = false;
     _distractionCount = 0;
 
-    if (_enableWhiteNoise) {
-      _audio.playWhiteNoise(_whiteNoiseType);
-      _audio.adjustToFlowRate(flowRate);
-    }
-
-    if (_enableScreenMonitoring) {
-      _screenMonitor.startMonitoring();
-      _nativeMonitor = ScreenMonitorFactory.create();
-      _nativeMonitor!.startNativeMonitoring();
-    }
-
-    if (_enableAttentionMonitoring) {
-      _attentionMonitor.startMonitoring();
-    }
+    _startServices();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
-
-      if (_enableSoundEffects && _elapsed.inSeconds > 0 && _elapsed.inSeconds % 60 == 0) {
-        _audio.playTickSound();
-      }
-
-      if (_enableAttentionMonitoring && _elapsed.inSeconds > 0 && _elapsed.inSeconds % 30 == 0) {
-        final score = _attentionMonitor.attentionScore;
-        if (score < 0.4) {
-          _distractionCount++;
-          if (_enableSoundEffects) _audio.playDistractionSound();
-        }
-      }
-
-      if (_enableWhiteNoise && _elapsed.inSeconds > 0 && _elapsed.inSeconds % 60 == 0) {
-        _audio.adjustToFlowRate(flowRate);
-      }
-
-      if (_enableAttentionMonitoring && _attentionMonitor.isInFlowState && _enableSoundEffects) {
-        if (_elapsed.inSeconds > 0 && _elapsed.inSeconds % 300 == 0) {
-          _audio.playAchievementSound();
-        }
-      }
-
       notifyListeners();
 
       if (_elapsed >= _targetDuration) {
@@ -137,14 +111,66 @@ class FocusProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _startServices() async {
+    try {
+      if (_enableWhiteNoise) {
+        try {
+          await _audioService.ensureInitialized();
+          await _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
+        } catch (e) {
+          debugPrint('White noise error: $e');
+        }
+      }
+
+      if (_enableScreenMonitoring) {
+        try {
+          _screenMonitor.startMonitoring();
+          _nativeMonitor = ScreenMonitorFactory.create();
+          _nativeMonitor!.startNativeMonitoring();
+        } catch (e) {
+          debugPrint('Screen monitor error: $e');
+        }
+      }
+
+      if (_enableAttentionMonitoring) {
+        try {
+          _attentionMonitor.initialize();
+          _attentionMonitor.startMonitoring();
+        } catch (e) {
+          debugPrint('Attention monitor error: $e');
+        }
+      }
+
+      if (_enableCamera) {
+        try {
+          await _cameraService.startCamera();
+        } catch (e) {
+          debugPrint('Camera error: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Service startup error: $e');
+    }
+  }
+
+  void _stopServices() {
+    _screenMonitor.stopMonitoring();
+    _nativeMonitor?.stopNativeMonitoring();
+    _attentionMonitor.stopMonitoring();
+    _cameraService.stopCamera();
+  }
+
   void pauseFocus() {
     if (!_isRunning || _isPaused) return;
     _timer?.cancel();
     _isPaused = true;
 
-    if (_enableScreenMonitoring) _screenMonitor.stopMonitoring();
-    _nativeMonitor?.stopNativeMonitoring();
-    if (_enableAttentionMonitoring) _attentionMonitor.stopMonitoring();
+    try {
+      _audioService.stopWhiteNoise();
+      _attentionMonitor.stopMonitoring();
+    } catch (e) {
+      debugPrint('Pause error: $e');
+    }
 
     notifyListeners();
   }
@@ -153,14 +179,16 @@ class FocusProvider extends ChangeNotifier {
     if (!_isRunning || !_isPaused) return;
     _isPaused = false;
 
-    if (_enableScreenMonitoring) _screenMonitor.startMonitoring();
-    if (_nativeMonitor != null) {
-      _nativeMonitor!.startNativeMonitoring();
-    } else if (_enableScreenMonitoring) {
-      _nativeMonitor = ScreenMonitorFactory.create();
-      _nativeMonitor!.startNativeMonitoring();
+    try {
+      if (_enableWhiteNoise) {
+        _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
+      }
+      if (_enableAttentionMonitoring) {
+        _attentionMonitor.startMonitoring();
+      }
+    } catch (e) {
+      debugPrint('Resume error: $e');
     }
-    if (_enableAttentionMonitoring) _attentionMonitor.startMonitoring();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
@@ -174,35 +202,46 @@ class FocusProvider extends ChangeNotifier {
   }
 
   Future<void> completeFocus() async {
+    if (!_isRunning) return;
     _timer?.cancel();
     _isRunning = false;
     _isPaused = false;
 
-    _audio.stopWhiteNoise();
-    _screenMonitor.stopMonitoring();
-    _nativeMonitor?.stopNativeMonitoring();
-    _nativeMonitor?.dispose();
-    _nativeMonitor = null;
-    _attentionMonitor.stopMonitoring();
+    try {
+      if (_currentSession != null) {
+        final attentionDistractions = _enableAttentionMonitoring
+            ? _attentionMonitor.distractionEvents
+            : 0;
+        final wasFlow = _enableAttentionMonitoring &&
+            (_attentionMonitor.isInFlowState || _elapsed.inMinutes >= 30);
 
-    final wasFlowState = _attentionMonitor.isInFlowState || _elapsed.inMinutes >= 30;
+        final completed = _currentSession!.copyWith(
+          status: FocusStatus.completed,
+          endTime: DateTime.now(),
+          actualDuration: _elapsed,
+          vValueEarned: _elapsed.inMinutes / 60.0,
+          distractionCount: _distractionCount + attentionDistractions,
+          wasDistractionFree: _distractionCount == 0 && attentionDistractions == 0,
+          wasFlowState: wasFlow,
+        );
+        await _db.insertFocusSession(completed);
+        _currentSession = completed;
 
-    if (_currentSession != null) {
-      final completed = _currentSession!.copyWith(
-        status: FocusStatus.completed,
-        endTime: DateTime.now(),
-        actualDuration: _elapsed,
-        vValueEarned: _elapsed.inMinutes / 60.0,
-        distractionCount: _distractionCount,
-        wasDistractionFree: _distractionCount == 0,
-        wasFlowState: wasFlowState,
-      );
-      await _db.insertFocusSession(completed);
-      _currentSession = completed;
+        try {
+          await _audioService.playCompletionSound();
+        } catch (e) {
+          debugPrint('Completion sound error: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Complete focus error: $e');
     }
 
-    if (_enableSoundEffects) {
-      _audio.playCompletionSound();
+    try {
+      _audioService.stopWhiteNoise();
+      _stopServices();
+    } catch (e) {
+      debugPrint('Stop services error: $e');
     }
 
     notifyListeners();
@@ -213,12 +252,8 @@ class FocusProvider extends ChangeNotifier {
     _isRunning = false;
     _isPaused = false;
 
-    _audio.stopWhiteNoise();
-    _screenMonitor.stopMonitoring();
-    _nativeMonitor?.stopNativeMonitoring();
-    _nativeMonitor?.dispose();
-    _nativeMonitor = null;
-    _attentionMonitor.stopMonitoring();
+    _audioService.stopWhiteNoise();
+    _stopServices();
 
     if (_currentSession != null) {
       final cancelled = _currentSession!.copyWith(
@@ -238,7 +273,12 @@ class FocusProvider extends ChangeNotifier {
   void recordDistraction() {
     _distractionCount++;
     _attentionMonitor.reportDistraction();
-    if (_enableSoundEffects) _audio.playDistractionSound();
+    _audioService.playDistractionSound();
+    notifyListeners();
+  }
+
+  void adjustVolume(double volume) {
+    _audioService.setVolume(volume);
     notifyListeners();
   }
 
@@ -249,8 +289,10 @@ class FocusProvider extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
-    _audio.dispose();
+    _audioService.stopWhiteNoise();
+    _stopServices();
     _nativeMonitor?.dispose();
+    _audioService.dispose();
     super.dispose();
   }
 }

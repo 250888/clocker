@@ -103,27 +103,27 @@ class Task {
 
   factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
-      id: (map['id'] ?? '') as String,
-      spacetimeId: (map['spacetimeId'] ?? '') as String,
-      title: (map['title'] ?? '') as String,
-      description: map['description'] as String?,
-      vValueWeight: (map['vValueWeight'] as num?)?.toDouble() ?? 1.0,
-      status: TaskStatus.values[((map['status'] as int?) ?? 0).clamp(0, TaskStatus.values.length - 1)],
-      priority: TaskPriority.values[((map['priority'] as int?) ?? 1).clamp(0, TaskPriority.values.length - 1)],
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      id: map['id'],
+      spacetimeId: map['spacetimeId'],
+      title: map['title'],
+      description: map['description'],
+      vValueWeight: map['vValueWeight'] ?? 1.0,
+      status: TaskStatus.values[map['status'] ?? 0],
+      priority: TaskPriority.values[map['priority'] ?? 1],
+      createdAt: DateTime.parse(map['createdAt']),
       completedAt: map['completedAt'] != null
-          ? DateTime.tryParse(map['completedAt'].toString())
+          ? DateTime.parse(map['completedAt'])
           : null,
       dueDate:
-          map['dueDate'] != null ? DateTime.tryParse(map['dueDate'].toString()) : null,
-      subtasks: map['subtasks'] != null && map['subtasks'].toString().isNotEmpty
-          ? map['subtasks'].toString().split('||')
-          : <String>[],
+          map['dueDate'] != null ? DateTime.parse(map['dueDate']) : null,
+      subtasks: map['subtasks'] != null && map['subtasks'].isNotEmpty
+          ? map['subtasks'].split('||')
+          : [],
       completedSubtasks:
-          map['completedSubtasks'] != null && map['completedSubtasks'].toString().isNotEmpty
-              ? map['completedSubtasks'].toString().split('||')
-              : <String>[],
-      verificationNote: map['verificationNote'] as String?,
+          map['completedSubtasks'] != null && map['completedSubtasks'].isNotEmpty
+              ? map['completedSubtasks'].split('||')
+              : [],
+      verificationNote: map['verificationNote'],
     );
   }
 }

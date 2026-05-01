@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
-import '../providers/spacetime_provider.dart';
-import '../providers/task_provider.dart';
-import '../providers/achievement_provider.dart';
-import '../providers/settings_provider.dart';
 import 'home_screen.dart';
 import 'focus_screen.dart';
 import 'task_screen.dart';
@@ -32,26 +27,6 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    _initData();
-  }
-
-  Future<void> _initData() async {
-    try {
-      final settingsProvider = context.read<SettingsProvider>();
-      final spacetimeProvider = context.read<SpacetimeProvider>();
-      final achievementProvider = context.read<AchievementProvider>();
-
-      await settingsProvider.loadSettings();
-      await spacetimeProvider.loadSpacetimes();
-      await achievementProvider.loadAchievements();
-
-      if (spacetimeProvider.activeSpacetime != null) {
-        final taskProvider = context.read<TaskProvider>();
-        await taskProvider.loadTasks(spacetimeProvider.activeSpacetime!.id);
-      }
-    } catch (e) {
-      debugPrint('InitData error: $e');
-    }
   }
 
   @override

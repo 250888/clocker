@@ -112,7 +112,7 @@ if ($procId -gt 0) {
       final result = Process.runSync('powershell', [
         '-NoProfile',
         '-Command',
-        '(Get-Process | Where-Object {\$_.MainWindowTitle -ne ""} | Select-Object -First 1).ProcessName',
+        r'(Get-Process | Where-Object {$_.MainWindowTitle -ne ""} | Select-Object -First 1).ProcessName',
       ]);
       if (result.exitCode == 0) {
         final name = result.stdout.toString().trim();

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clocker - 下载</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #0A0A1A; color: #E8E8F0; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .header {
+      width: 100%; padding: 40px 20px 30px; text-align: center;
+      background: linear-gradient(135deg, #6C5CE7 0%, #A29BFE 50%, #00CEC9 100%);
+    }
+    .header .logo { font-size: 48px; margin-bottom: 12px; }
+    .header h1 { font-size: 32px; font-weight: bold; color: white; letter-spacing: 2px; }
+    .header .subtitle { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px; }
+    .header .slogan { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 4px; }
+    .content { max-width: 800px; width: 100%; padding: 40px 20px; }
+    .download-section { margin-bottom: 40px; }
+    .download-section h2 { font-size: 20px; color: #A29BFE; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .download-card {
+      background: #1A1A2E; border: 1px solid #2A2A4A; border-radius: 16px;
+      padding: 24px; margin-bottom: 16px; transition: border-color 0.2s;
+    }
+    .download-card:hover { border-color: #6C5CE7; }
+    .download-card .platform { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .download-card .platform-icon { font-size: 36px; }
+    .download-card .platform-info h3 { font-size: 18px; color: #E8E8F0; }
+    .download-card .platform-info p { font-size: 13px; color: #888; margin-top: 4px; }
+    .download-card .btn {
+      display: inline-block; padding: 12px 28px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
+      transition: all 0.2s; cursor: pointer; border: none;
+    }
+    .btn-primary { background: #6C5CE7; color: white; }
+    .btn-primary:hover { background: #5B4BD5; transform: translateY(-1px); }
+    .btn-secondary { background: #2A2A4A; color: #A29BFE; border: 1px solid #3A3A5A; }
+    .btn-secondary:hover { background: #3A3A5A; }
+    .btn-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .features {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px; margin-top: 32px;
+    }
+    .feature-card {
+      background: #1A1A2E; border: 1px solid #2A2A4A; border-radius: 12px;
+      padding: 20px; text-align: center;
+    }
+    .feature-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .feature-card h4 { font-size: 14px; color: #E8E8F0; margin-bottom: 4px; }
+    .feature-card p { font-size: 12px; color: #888; }
+    .web-link {
+      text-align: center; margin: 32px 0; padding: 24px;
+      background: linear-gradient(135deg, rgba(108,92,231,0.15), rgba(0,206,201,0.15));
+      border-radius: 16px; border: 1px solid #2A2A4A;
+    }
+    .web-link p { font-size: 14px; color: #A29BFE; margin-bottom: 12px; }
+    .footer { text-align: center; padding: 32px 20px; color: #555; font-size: 12px; }
+    .footer a { color: #6C5CE7; text-decoration: none; }
+    .version-tag {
+      display: inline-block; padding: 2px 8px; background: #2A2A4A;
+      border-radius: 4px; font-size: 11px; color: #888; margin-left: 8px;
+    }
+    .build-steps {
+      background: #12121E; border-radius: 8px; padding: 16px; margin-top: 12px;
+      font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; color: #A0A0C0;
+      line-height: 1.8; overflow-x: auto;
+    }
+    .build-steps code { color: #00CEC9; }
+    .build-steps .comment { color: #555; }
+    .badge-soon {
+      display: inline-block; padding: 3px 10px; background: rgba(255,165,0,0.2);
+      border-radius: 6px; font-size: 12px; color: #FFA500; margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">⏰</div>
+    <h1>Clocker</h1>
+    <div class="subtitle">你才是钟 — 用狭义相对论，根治拖延症</div>
+    <div class="slogan">你的行动速度，决定你的时间流速</div>
+  </div>
+
+  <div class="content">
+    <div class="web-link">
+      <p>不想下载？直接在浏览器中使用</p>
+      <a href="./" class="btn btn-primary">打开网页版</a>
+    </div>
+
+    <div class="download-section">
+      <h2>📥 下载客户端</h2>
+
+      <div class="download-card">
+        <div class="platform">
+          <div class="platform-icon">🪟</div>
+          <div class="platform-info">
+            <h3>Windows <span class="version-tag">v1.0.0</span></h3>
+            <p>支持 Windows 10/11，包含屏幕监控、摄像头注意力检测、音效生成</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-primary">
+            前往 Releases 页面
+          </a>
+          <a href="https://github.com/250888/clocker" class="btn btn-secondary">查看源码</a>
+        </div>
+        <div class="build-steps">
+          <span class="comment"># 自行构建 Windows 版本</span><br>
+          <code>git clone https://github.com/250888/clocker.git</code><br>
+          <code>cd clocker/clocker_app</code><br>
+          <code>flutter build windows --release</code><br>
+          <span class="comment"># 输出: build/windows/x64/runner/Release/</span>
+        </div>
+      </div>
+
+      <div class="download-card">
+        <div class="platform">
+          <div class="platform-icon">🤖</div>
+          <div class="platform-info">
+            <h3>Android <span class="version-tag">v1.0.0</span></h3>
+            <p>支持 Android 6.0+，包含摄像头注意力检测、白噪音、专注计时</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <a href="https://github.com/250888/clocker/releases" class="btn btn-primary">
+            前往 Releases 页面
+          </a>
+          <a href="https://github.com/250888/clocker" class="btn btn-secondary">查看源码</a>
+        </div>
+        <div class="build-steps">
+          <span class="comment"># 自行构建 Android 版本</span><br>
+          <code>git clone https://github.com/250888/clocker.git</code><br>
+          <code>cd clocker/clocker_app</code><br>
+          <code>flutter build apk --release</code><br>
+          <span class="comment"># 输出: build/app/outputs/flutter-apk/app-release.apk</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="download-section">
+      <h2>✨ 功能特性</h2>
+      <div class="features">
+        <div class="feature-card">
+          <div class="icon">🧬</div>
+          <h4>洛伦兹时间引擎</h4>
+          <p>基于狭义相对论的时间膨胀算法</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🎵</div>
+          <h4>程序生成音效</h4>
+          <p>6种白噪音 + 4种提示音</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📸</div>
+          <h4>摄像头注意力</h4>
+          <p>实时人脸检测和注意力监控</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🖥️</div>
+          <h4>屏幕监控</h4>
+          <p>自动区分生产性/娱乐应用</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⚡</div>
+          <h4>心流状态检测</h4>
+          <p>连续15分钟+高注意力自动检测</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📊</div>
+          <h4>数据报告</h4>
+          <p>7天/30天趋势分析和效率报告</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="download-section">
+      <h2>🔧 开发者信息</h2>
+      <div class="download-card">
+        <p style="color: #888; font-size: 13px; line-height: 1.8;">
+          <strong style="color: #E8E8F0;">技术栈：</strong>Flutter 3.x + Provider + sqflite<br>
+          <strong style="color: #E8E8F0;">开源地址：</strong><a href="https://github.com/250888/clocker" style="color: #6C5CE7;">github.com/250888/clocker</a><br>
+          <strong style="color: #E8E8F0;">构建方式：</strong>Flutter Web + Windows Desktop + Android<br>
+          <strong style="color: #E8E8F0;">隐私说明：</strong>所有监控功能均为可选，数据仅存储在本地
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Clocker &copy; 2025 | 用狭义相对论，根治拖延症</p>
+    <p style="margin-top: 8px;">
+      <a href="./">网页版</a> ·
+      <a href="https://github.com/250888/clocker">GitHub</a> ·
+      <a href="https://github.com/250888/clocker/releases">Releases</a>
+    </p>
+  </div>
+</body>
+</html>

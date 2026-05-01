@@ -3,20 +3,24 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'native_audio_stub.dart'
+    if (dart.library.html) 'web_audio_impl.dart';
 
 class AudioService {
   static final AudioService _instance = AudioService._internal();
   factory AudioService() => _instance;
   AudioService._internal();
 
-  final AudioPlayer _sfxPlayer = AudioPlayer();
+  AudioPlayer? _sfxPlayer;
   AudioPlayer? _ambientPlayer;
   bool _isPlaying = false;
   String _currentSound = 'none';
   double _volume = 0.5;
+  bool _initialized = false;
 
   bool get isPlaying => _isPlaying;
   String get currentSound => _currentSound;
+  double get volume => _volume;
 
   final List<Map<String, dynamic>> soundOptions = [
     {'id': 'rain', 'name': '雨声', 'icon': Icons.water_drop, 'color': Colors.blue},
@@ -28,6 +32,12 @@ class AudioService {
   ];
 
   static const int _sampleRate = 22050;
+
+  Future<void> ensureInitialized() async {
+    if (_initialized) return;
+    _initialized = true;
+    _sfxPlayer = AudioPlayer();
+  }
 
   Uint8List _generateWav(Uint8List pcmData, int sampleRate, int channels) {
     final dataSize = pcmData.length;
@@ -303,17 +313,17 @@ class AudioService {
     _isPlaying = true;
 
     try {
-      await _ambientPlayer?.stop();
-      _ambientPlayer = AudioPlayer();
-
-      final pcmData = _generateNoisePcm(soundId, volume, 30);
-      final wavData = _generateWav(pcmData, _sampleRate, 1);
-
-      await _ambientPlayer!.setReleaseMode(ReleaseMode.loop);
-      await _ambientPlayer!.setVolume(volume);
-      await _ambientPlayer!.play(BytesSource(wavData));
-
-      debugPrint('Playing white noise: $soundId');
+      await stopWhiteNoise();
+      final ok = await platformPlayWhiteNoise(soundId, volume);
+      if (!ok) {
+        _ambientPlayer = AudioPlayer();
+        final pcmData = _generateNoisePcm(soundId, volume, 30);
+        final wavData = _generateWav(pcmData, _sampleRate, 1);
+        await _ambientPlayer!.setReleaseMode(ReleaseMode.loop);
+        await _ambientPlayer!.setVolume(volume);
+        await _ambientPlayer!.play(BytesSource(wavData));
+      }
+      debugPrint('Playing white noise: $soundId (native=${!ok})');
     } catch (e) {
       debugPrint('Audio play error: $e');
     }
@@ -323,7 +333,10 @@ class AudioService {
     _isPlaying = false;
     _currentSound = 'none';
     try {
+      await platformStopWhiteNoise();
       await _ambientPlayer?.stop();
+      _ambientPlayer?.dispose();
+      _ambientPlayer = null;
     } catch (e) {
       debugPrint('Audio stop error: $e');
     }
@@ -332,6 +345,7 @@ class AudioService {
   Future<void> setVolume(double volume) async {
     _volume = volume.clamp(0.0, 1.0);
     try {
+      await platformSetNoiseVolume(_volume);
       await _ambientPlayer?.setVolume(_volume);
     } catch (e) {
       debugPrint('Volume error: $e');
@@ -344,7 +358,7 @@ class AudioService {
       // C5=523, E5=659, G5=784 大三和弦
       final chord = _generateChordPcm([523.25, 659.25, 783.99], 600, vol: 0.25);
       final wav = _generateWav(chord, _sampleRate, 1);
-      await _sfxPlayer.play(BytesSource(wav));
+      await _sfxPlayer?.play(BytesSource(wav));
       debugPrint('Completion sound: C-E-G major chord');
     } catch (e) {
       debugPrint('Completion sound error: $e');
@@ -356,7 +370,7 @@ class AudioService {
     try {
       final pcm = _generateTonePcm(200, 300, vol: 0.4, attackMs: 5, releaseMs: 100);
       final wav = _generateWav(pcm, _sampleRate, 1);
-      await _sfxPlayer.play(BytesSource(wav));
+      await _sfxPlayer?.play(BytesSource(wav));
       debugPrint('Distraction warning: 200Hz');
     } catch (e) {
       debugPrint('Distraction sound error: $e');
@@ -372,7 +386,7 @@ class AudioService {
       final d = _generateTonePcm(1760, 400, vol: 0.25);
       final combined = Uint8List.fromList([...a, ...b, ...c, ...d]);
       final wav = _generateWav(combined, _sampleRate, 1);
-      await _sfxPlayer.play(BytesSource(wav));
+      await _sfxPlayer?.play(BytesSource(wav));
       debugPrint('Achievement sound: ascending tones');
     } catch (e) {
       debugPrint('Achievement sound error: $e');
@@ -384,7 +398,7 @@ class AudioService {
     try {
       final pcm = _generateTonePcm(1000, 50, vol: 0.15, attackMs: 2, releaseMs: 20);
       final wav = _generateWav(pcm, _sampleRate, 1);
-      await _sfxPlayer.play(BytesSource(wav));
+      await _sfxPlayer?.play(BytesSource(wav));
     } catch (e) {
       debugPrint('Tick sound error: $e');
     }
@@ -399,6 +413,6 @@ class AudioService {
 
   void dispose() {
     _ambientPlayer?.dispose();
-    _sfxPlayer.dispose();
+    _sfxPlayer?.dispose();
   }
 }

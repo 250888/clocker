@@ -4,110 +4,197 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Clocker - 用狭义相对论，根治拖延症。你的行动速度，决定你的时间流速。">
-  <meta name="keywords" content="Clocker, 自律, 拖延症, 番茄钟, 专注, 时间管理, 相对论">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Clocker">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Clocker">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>Clocker - 用狭义相对论，根治拖延症</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="manifest.json">
-
+  <title>Clocker</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#0a0a1a; overflow:hidden; }
+    #loading-screen {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#0a0a1a; z-index:9999999;
+      transition: opacity 0.5s;
     }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #0A0A1A;
+    #loading-screen.fade-out { opacity:0; pointer-events:none; }
+    #loading-screen .logo {
+      font-size:48px; font-family:system-ui,-apple-system,sans-serif;
+      color:#7c4dff; font-weight:700; margin-bottom:8px;
     }
-    #loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #6C5CE7 0%, #A29BFE 50%, #00CEC9 100%);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    #loading-screen .subtitle {
+      font-size:14px; color:rgba(255,255,255,0.4); margin-bottom:40px;
+      font-family:system-ui,-apple-system,sans-serif;
     }
-    #loading .logo {
-      width: 80px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      margin-bottom: 24px;
-      animation: fadeIn 0.6s ease-out;
+    #loading-bar-outer {
+      width:240px; height:4px; background:rgba(255,255,255,0.08);
+      border-radius:2px; overflow:hidden;
     }
-    #loading .title {
-      color: white;
-      font-size: 28px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-      animation: fadeIn 0.6s ease-out 0.1s both;
+    #loading-bar-inner {
+      width:0%; height:100%; background:linear-gradient(90deg,#7c4dff,#e040fb);
+      border-radius:2px; transition:width 0.3s;
     }
-    #loading .subtitle {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-      margin-bottom: 24px;
-      animation: fadeIn 0.6s ease-out 0.2s both;
+    #loading-text {
+      margin-top:16px; font-size:12px; color:rgba(255,255,255,0.3);
+      font-family:system-ui,-apple-system,sans-serif;
     }
-    #loading .slogan {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
-      animation: fadeIn 0.6s ease-out 0.3s both;
+    #camera-container {
+      position:fixed; bottom:12px; right:12px; width:160px; height:120px;
+      z-index:2147483647; border-radius:12px; overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,0.8); border:2px solid rgba(124,77,255,0.7);
+      display:none; pointer-events:none; background:#0a0a1a;
     }
-    #loading .progress {
-      margin-top: 32px;
-      width: 160px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-      overflow: hidden;
-      animation: fadeIn 0.6s ease-out 0.4s both;
-    }
-    #loading .progress-bar {
-      height: 100%;
-      background: white;
-      border-radius: 2px;
-      animation: progress 2s ease-out forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes progress {
-      from { width: 0%; }
-      to { width: 100%; }
-    }
+    #camera-video { width:100%; height:100%; object-fit:cover; display:block; }
   </style>
 </head>
 <body>
-  <div id="loading">
-    <div class="logo">⏰</div>
-    <div class="title">Clocker</div>
-    <div class="subtitle">你才是钟</div>
-    <div class="slogan">你的行动速度，决定你的时间流速</div>
-    <div class="progress">
-      <div class="progress-bar"></div>
-    </div>
+  <div id="loading-screen">
+    <div class="logo">Clocker</div>
+    <div class="subtitle">Redefining Time Management</div>
+    <div id="loading-bar-outer"><div id="loading-bar-inner"></div></div>
+    <div id="loading-text">Initializing...</div>
+  </div>
+  <div id="camera-container">
+    <video id="camera-video" autoplay playsinline muted></video>
   </div>
 
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(r){
+        for(var i=0;i<r.length;i++) r[i].unregister();
+      }).catch(function(){});
+      if('caches' in window){
+        caches.keys().then(function(n){
+          for(var i=0;i<n.length;i++) caches.delete(n[i]);
+        }).catch(function(){});
+      }
+    }
+
+    (function(){
+      var bar=document.getElementById('loading-bar-inner');
+      var txt=document.getElementById('loading-text');
+      var pct=0;
+      var iv=setInterval(function(){
+        pct+=Math.random()*6+2;
+        if(pct>85) pct=85;
+        bar.style.width=pct+'%';
+        if(pct>25) txt.textContent='Loading engine...';
+        if(pct>50) txt.textContent='Preparing UI...';
+        if(pct>75) txt.textContent='Almost ready...';
+      },400);
+      window._flutterLoadingProgress=function(p,msg){
+        if(p>pct){pct=Math.min(p,95);bar.style.width=pct+'%';}
+        if(msg) txt.textContent=msg;
+      };
+      window._flutterLoadingDone=function(){
+        clearInterval(iv);
+        bar.style.width='100%';
+        txt.textContent='Ready!';
+        setTimeout(function(){
+          document.getElementById('loading-screen').classList.add('fade-out');
+          setTimeout(function(){
+            document.getElementById('loading-screen').style.display='none';
+          },600);
+        },300);
+      };
+      setTimeout(function(){
+        if(pct<5) window._flutterLoadingDone();
+      },30000);
+    })();
+
+    window.startCamera=async function(){
+      try{
+        var v=document.getElementById('camera-video');
+        var c=document.getElementById('camera-container');
+        var s=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:'user',width:{ideal:320},height:{ideal:240}},audio:false
+        });
+        v.srcObject=s;await v.play();c.style.display='block';return true;
+      }catch(e){console.warn('Camera:',e);return false;}
+    };
+    window.stopCamera=function(){
+      var v=document.getElementById('camera-video');
+      var c=document.getElementById('camera-container');
+      if(v.srcObject){v.srcObject.getTracks().forEach(function(t){t.stop();});v.srcObject=null;}
+      c.style.display='none';
+    };
+    window.setCameraOpacity=function(v){
+      var c=document.getElementById('camera-container');if(c) c.style.opacity=v;
+    };
+    window.setCameraMirror=function(m){
+      var v=document.getElementById('camera-video');if(v) v.style.transform=m?'scaleX(-1)':'scaleX(1)';
+    };
+
+    var _ac=null,_ns=null,_ng=null,_nf1=null,_nf2=null;
+    function _getAC(){
+      if(!_ac) _ac=new(window.AudioContext||window.webkitAudioContext)();
+      if(_ac.state==='suspended') _ac.resume();
+      return _ac;
+    }
+    function _mkBuf(ctx){
+      var sr=ctx.sampleRate,len=sr*4,buf=ctx.createBuffer(2,len,sr);
+      for(var ch=0;ch<2;ch++){var d=buf.getChannelData(ch);for(var i=0;i<len;i++) d[i]=Math.random()*2-1;}
+      return buf;
+    }
+    window.startWhiteNoise=function(sid,vol){
+      try{
+        var ctx=_getAC();
+        if(_ns){try{_ns.stop();}catch(e){}_ns=null;}
+        if(_nf1){try{_nf1.disconnect();}catch(e){}}
+        if(_nf2){try{_nf2.disconnect();}catch(e){}}
+        if(_ng){try{_ng.disconnect();}catch(e){}}
+        var buf=_mkBuf(ctx);
+        _ns=ctx.createBufferSource();_ns.buffer=buf;_ns.loop=true;
+        _ng=ctx.createGain();_ng.gain.value=vol;
+        _nf1=ctx.createBiquadFilter();_nf2=ctx.createBiquadFilter();
+        switch(sid){
+          case 'rain':
+            _nf1.type='bandpass';_nf1.frequency.value=2500;_nf1.Q.value=0.5;
+            _ns.connect(_nf1);_nf1.connect(_ng);break;
+          case 'fire':
+            _nf1.type='lowpass';_nf1.frequency.value=600;_nf1.Q.value=1.0;
+            _nf2.type='highpass';_nf2.frequency.value=80;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
+          case 'ocean':
+            _nf1.type='lowpass';_nf1.frequency.value=800;_nf1.Q.value=0.8;
+            var lfo=ctx.createOscillator(),lg=ctx.createGain();
+            lfo.frequency.value=0.12;lg.gain.value=400;
+            lfo.connect(lg);lg.connect(_nf1.frequency);lfo.start();
+            _ns.connect(_nf1);_nf1.connect(_ng);break;
+          case 'wind':
+            _nf1.type='bandpass';_nf1.frequency.value=400;_nf1.Q.value=0.3;
+            _nf2.type='lowpass';_nf2.frequency.value=1200;
+            var wl=ctx.createOscillator(),wg=ctx.createGain();
+            wl.frequency.value=0.08;wg.gain.value=300;
+            wl.connect(wg);wg.connect(_nf1.frequency);wl.start();
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
+          case 'forest':
+            _nf1.type='bandpass';_nf1.frequency.value=6000;_nf1.Q.value=2.0;
+            _nf2.type='lowpass';_nf2.frequency.value=8000;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
+          case 'cafe':
+            _nf1.type='bandpass';_nf1.frequency.value=1500;_nf1.Q.value=0.6;
+            _nf2.type='lowpass';_nf2.frequency.value=3000;
+            _ns.connect(_nf1);_nf1.connect(_nf2);_nf2.connect(_ng);break;
+          default: _ns.connect(_ng);
+        }
+        _ng.connect(ctx.destination);_ns.start(0);return true;
+      }catch(e){console.warn('Noise:',e);return false;}
+    };
+    window.stopWhiteNoise=function(){
+      try{
+        if(_ns){_ns.stop();_ns=null;}
+        if(_nf1){_nf1.disconnect();_nf1=null;}
+        if(_nf2){_nf2.disconnect();_nf2=null;}
+        if(_ng){_ng.disconnect();_ng=null;}
+      }catch(e){}
+    };
+    window.setNoiseVolume=function(v){if(_ng){try{_ng.gain.value=v;}catch(e){}}};
+    window.isNoisePlaying=function(){return _ns!=null;};
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

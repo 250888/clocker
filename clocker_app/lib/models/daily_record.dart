@@ -52,21 +52,21 @@ class DailyRecord {
 
   factory DailyRecord.fromMap(Map<String, dynamic> map) {
     return DailyRecord(
-      id: (map['id'] ?? '') as String,
-      spacetimeId: (map['spacetimeId'] ?? '') as String,
-      date: DateTime.tryParse(map['date']?.toString() ?? '') ?? DateTime.now(),
-      focusHours: (map['focusHours'] as num?)?.toDouble() ?? 0.0,
-      taskValue: (map['taskValue'] as num?)?.toDouble() ?? 0.0,
-      screenPenalty: (map['screenPenalty'] as num?)?.toDouble() ?? 0.0,
-      vValue: (map['vValue'] as num?)?.toDouble() ?? 0.0,
-      flowRate: (map['flowRate'] as num?)?.toDouble() ?? 2.0,
-      sessionsCompleted: (map['sessionsCompleted'] as int?) ?? 0,
-      tasksCompleted: (map['tasksCompleted'] as int?) ?? 0,
-      timeEarned: (map['timeEarned'] as num?)?.toDouble() ?? 0.0,
-      timeLost: (map['timeLost'] as num?)?.toDouble() ?? 0.0,
-      hadFlowState: (map['hadFlowState'] as int?) == 1,
+      id: map['id'],
+      spacetimeId: map['spacetimeId'],
+      date: DateTime.parse(map['date']),
+      focusHours: map['focusHours'] ?? 0,
+      taskValue: map['taskValue'] ?? 0,
+      screenPenalty: map['screenPenalty'] ?? 0,
+      vValue: map['vValue'] ?? 0,
+      flowRate: map['flowRate'] ?? 2.0,
+      sessionsCompleted: map['sessionsCompleted'] ?? 0,
+      tasksCompleted: map['tasksCompleted'] ?? 0,
+      timeEarned: map['timeEarned'] ?? 0,
+      timeLost: map['timeLost'] ?? 0,
+      hadFlowState: map['hadFlowState'] == 1,
       flowStateDuration:
-          Duration(minutes: (map['flowStateDurationMinutes'] as int?) ?? 0),
+          Duration(minutes: map['flowStateDurationMinutes'] ?? 0),
     );
   }
 }
