@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'web_camera_service.dart';
 
 WebCameraService createWebCameraService() => _StubCameraService();
@@ -20,6 +21,9 @@ class _StubCameraService implements WebCameraService {
 
   @override
   void setMirror(bool mirror) {}
+
+  @override
+  Widget? buildCameraPreview() => null;
 
   @override
   void dispose() {}

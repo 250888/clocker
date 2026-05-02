@@ -567,6 +567,44 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
             '摄像头画面显示在页面右上角，用于注意力检测和人脸追踪',
             style: TextStyle(color: AppColors.textHint, fontSize: 11),
           ),
+          if (focusProvider.isCameraActive) ...[
+            const SizedBox(height: 10),
+            Center(
+              child:
+                  focusProvider.cameraService.buildCameraPreview() ??
+                  Container(
+                    width: 200,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.videocam,
+                            color: AppColors.primary.withValues(alpha: 0.5),
+                            size: 32,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '摄像头预览',
+                            style: TextStyle(
+                              color: AppColors.textHint,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [

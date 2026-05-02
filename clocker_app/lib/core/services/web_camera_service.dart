@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'web_camera_impl.dart'
-    if (dart.library.io) 'web_camera_stub.dart'
+    if (dart.library.io) 'native_camera_service.dart'
     as impl;
 
 abstract class WebCameraService {
@@ -14,5 +15,6 @@ abstract class WebCameraService {
   void stopCamera();
   void setOpacity(double opacity);
   void setMirror(bool mirror);
+  Widget? buildCameraPreview();
   void dispose();
 }

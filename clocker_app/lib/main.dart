@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/constants/app_theme.dart';
 import 'core/services/loading_screen_bridge.dart';
 import 'providers/spacetime_provider.dart';
@@ -14,6 +16,11 @@ import 'screens/create_spacetime_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   runApp(const ClockerApp());
 }

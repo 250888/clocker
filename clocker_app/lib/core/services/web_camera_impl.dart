@@ -1,6 +1,7 @@
 import 'dart:html' as html;
 import 'dart:js_util' as js_util;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'web_camera_service.dart';
 
 WebCameraService createWebCameraService() => WebCameraServiceImpl();
@@ -63,6 +64,9 @@ class WebCameraServiceImpl implements WebCameraService {
       debugPrint('Camera mirror error: $e');
     }
   }
+
+  @override
+  Widget? buildCameraPreview() => null;
 
   @override
   void dispose() {
