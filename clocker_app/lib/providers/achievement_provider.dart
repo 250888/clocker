@@ -69,8 +69,7 @@ class AchievementProvider extends ChangeNotifier {
             shouldUnlock = true;
           } else if (achievement.name == '时空大师' && totalDaysEarned >= 30) {
             shouldUnlock = true;
-          } else if (achievement.name == '超光速粒子' &&
-              unlockedCount >= 9) {
+          } else if (achievement.name == '超光速粒子' && unlockedCount >= 9) {
             shouldUnlock = true;
           }
           break;

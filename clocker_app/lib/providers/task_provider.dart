@@ -8,9 +8,12 @@ class TaskProvider extends ChangeNotifier {
   final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   List<Task> get tasks => _tasks;
-  List<Task> get pendingTasks => _tasks.where((t) => t.status == TaskStatus.pending).toList();
-  List<Task> get inProgressTasks => _tasks.where((t) => t.status == TaskStatus.inProgress).toList();
-  List<Task> get completedTasks => _tasks.where((t) => t.status == TaskStatus.completed).toList();
+  List<Task> get pendingTasks =>
+      _tasks.where((t) => t.status == TaskStatus.pending).toList();
+  List<Task> get inProgressTasks =>
+      _tasks.where((t) => t.status == TaskStatus.inProgress).toList();
+  List<Task> get completedTasks =>
+      _tasks.where((t) => t.status == TaskStatus.completed).toList();
   List<Task> get overdueTasks => _tasks.where((t) => t.isOverdue).toList();
 
   double get totalCompletedVValue =>
@@ -68,9 +71,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> addSubtask(Task task, String subtaskTitle) async {
-    final updated = task.copyWith(
-      subtasks: [...task.subtasks, subtaskTitle],
-    );
+    final updated = task.copyWith(subtasks: [...task.subtasks, subtaskTitle]);
     await updateTask(updated);
   }
 

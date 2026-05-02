@@ -15,8 +15,8 @@ class ScreenMonitorService {
   int _appSwitchCount = 0;
   bool _isPageVisible = true;
   DateTime? _sessionStart;
-  Map<String, Duration> _appTimeMap = {};
-  List<AppSwitchEvent> _switchHistory = [];
+  final Map<String, Duration> _appTimeMap = {};
+  final List<AppSwitchEvent> _switchHistory = [];
 
   final List<String> _productiveApps = [
     'clocker', 'code', 'vscode', 'visual studio code', 'android studio',

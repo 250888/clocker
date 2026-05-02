@@ -36,16 +36,13 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '🌌',
-              style: TextStyle(fontSize: 64),
-            ),
+            const Text('🌌', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 24),
             Text(
               AppStrings.slogan,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.primaryLight,
-                  ),
+                color: AppColors.primaryLight,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -67,7 +64,10 @@ class HomeScreen extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text(AppStrings.createSpacetime),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
               ),
             ),
           ],
@@ -94,10 +94,7 @@ class HomeScreen extends StatelessWidget {
                     Text(st.emoji!, style: const TextStyle(fontSize: 18)),
                     const SizedBox(width: 6),
                   ],
-                  Text(
-                    st.name,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                  Text(st.name, style: const TextStyle(fontSize: 16)),
                 ],
               ),
               titlePadding: const EdgeInsets.only(left: 16, bottom: 12),
@@ -227,23 +224,25 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '今日待办',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('今日待办', style: Theme.of(context).textTheme.titleMedium),
                 TextButton(
                   onPressed: () {
                     DefaultTabController.of(context).animateTo(2);
                   },
-                  child: Text('查看全部', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                  child: Text(
+                    '查看全部',
+                    style: TextStyle(color: AppColors.primary, fontSize: 12),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            ...miniTasks.map((task) => TaskCard(
-                  task: task,
-                  onComplete: () => taskProvider.completeTask(task),
-                )),
+            ...miniTasks.map(
+              (task) => TaskCard(
+                task: task,
+                onComplete: () => taskProvider.completeTask(task),
+              ),
+            ),
           ],
         );
       },
@@ -253,25 +252,26 @@ class HomeScreen extends StatelessWidget {
   Widget _buildRecentAchievements(BuildContext context) {
     return Consumer<AchievementProvider>(
       builder: (context, achievementProvider, _) {
-        final recent = achievementProvider.unlockedAchievements.take(4).toList();
+        final recent = achievementProvider.unlockedAchievements
+            .take(4)
+            .toList();
         if (recent.isEmpty) return const SizedBox.shrink();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '最近成就',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('最近成就', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             SizedBox(
               height: 90,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: recent.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) =>
-                    SizedBox(width: 100, child: AchievementBadge(achievement: recent[i])),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => SizedBox(
+                  width: 100,
+                  child: AchievementBadge(achievement: recent[i]),
+                ),
               ),
             ),
           ],
@@ -280,7 +280,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showSpacetimeSwitcher(BuildContext context, SpacetimeProvider provider) {
+  void _showSpacetimeSwitcher(
+    BuildContext context,
+    SpacetimeProvider provider,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -290,24 +293,33 @@ class HomeScreen extends StatelessWidget {
       builder: (_) => ListView(
         shrinkWrap: true,
         children: provider.spacetimes
-            .map((st) => ListTile(
-                  leading: Text(st.emoji ?? '🌌', style: const TextStyle(fontSize: 24)),
-                  title: Text(st.name),
-                  subtitle: Text('剩余${st.realDaysRemaining}天'),
-                  trailing: st.id == provider.activeSpacetime?.id
-                      ? const Icon(Icons.check_circle, color: AppColors.success)
-                      : null,
-                  onTap: () {
-                    provider.setActiveSpacetime(st);
-                    Navigator.pop(context);
-                  },
-                ))
+            .map(
+              (st) => ListTile(
+                leading: Text(
+                  st.emoji ?? '🌌',
+                  style: const TextStyle(fontSize: 24),
+                ),
+                title: Text(st.name),
+                subtitle: Text('剩余${st.realDaysRemaining}天'),
+                trailing: st.id == provider.activeSpacetime?.id
+                    ? const Icon(Icons.check_circle, color: AppColors.success)
+                    : null,
+                onTap: () {
+                  provider.setActiveSpacetime(st);
+                  Navigator.pop(context);
+                },
+              ),
+            )
             .toList(),
       ),
     );
   }
 
-  void _confirmDelete(BuildContext context, SpacetimeProvider provider, String id) {
+  void _confirmDelete(
+    BuildContext context,
+    SpacetimeProvider provider,
+    String id,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

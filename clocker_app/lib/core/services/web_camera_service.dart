@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'web_camera_impl.dart'
-    if (dart.library.io) 'web_camera_stub.dart' as impl;
+    if (dart.library.io) 'web_camera_stub.dart'
+    as impl;
 
 abstract class WebCameraService {
   static final WebCameraService _instance = impl.createWebCameraService();

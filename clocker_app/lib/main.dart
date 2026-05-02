@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_theme.dart';
+import 'core/services/loading_screen_bridge.dart';
 import 'providers/spacetime_provider.dart';
 import 'providers/task_provider.dart';
 import 'providers/focus_provider.dart';
@@ -81,15 +82,18 @@ class _AppEntryState extends State<_AppEntry> {
 
       focusProvider.configure(
         enableWhiteNoise: settingsProvider.settings.enableWhiteNoise,
-        enableScreenMonitoring: settingsProvider.settings.enableScreenMonitoring,
+        enableScreenMonitoring:
+            settingsProvider.settings.enableScreenMonitoring,
         enableCamera: settingsProvider.settings.enableCameraMonitoring,
       );
 
       await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
+        dismissHtmlLoadingScreen();
         setState(() => _initialized = true);
       }
     } catch (e) {
+      dismissHtmlLoadingScreen();
       if (mounted) {
         setState(() => _error = e.toString());
       }
@@ -108,9 +112,16 @@ class _AppEntryState extends State<_AppEntry> {
               children: [
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
-                Text('Initialization Error', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(
+                  'Initialization Error',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(fontSize: 14), textAlign: TextAlign.center),
+                Text(
+                  _error!,
+                  style: TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),

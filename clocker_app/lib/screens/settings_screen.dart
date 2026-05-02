@@ -12,9 +12,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('时空规则'),
-      ),
+      appBar: AppBar(title: const Text('时空规则')),
       body: Consumer<SettingsProvider>(
         builder: (context, settings, _) {
           return SingleChildScrollView(
@@ -51,14 +49,17 @@ class SettingsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.primaryLight,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: AppColors.primaryLight),
       ),
     );
   }
 
-  Widget _buildPomodoroDurationSetting(BuildContext context, SettingsProvider settings) {
+  Widget _buildPomodoroDurationSetting(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
@@ -71,10 +72,19 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-              Text('番茄钟时长 (分钟)', style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-              Text('${settings.settings.pomodoroDuration}分钟',
-                  style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.bold)),
+            children: [
+              Text(
+                '番茄钟时长 (分钟)',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              ),
+              Text(
+                '${settings.settings.pomodoroDuration}分钟',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           Slider(
@@ -89,7 +99,10 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonitoringSettings(BuildContext context, SettingsProvider settings) {
+  Widget _buildMonitoringSettings(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -109,7 +122,6 @@ class SettingsScreen extends StatelessWidget {
             settings.settings.enableCameraMonitoring,
             (v) => settings.toggleCameraMonitoring(v),
           ),
-
         ],
       ),
     );
@@ -123,7 +135,10 @@ class SettingsScreen extends StatelessWidget {
   ) {
     return SwitchListTile(
       title: Text(title, style: const TextStyle(fontSize: 14)),
-      subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 11, color: AppColors.textHint),
+      ),
       value: value,
       onChanged: onChanged,
       dense: true,
@@ -140,21 +155,30 @@ class SettingsScreen extends StatelessWidget {
         children: [
           SwitchListTile(
             title: const Text('通知提醒', style: TextStyle(fontSize: 14)),
-            subtitle: Text('截止日预警、每日损失报告', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+            subtitle: Text(
+              '截止日预警、每日损失报告',
+              style: TextStyle(fontSize: 11, color: AppColors.textHint),
+            ),
             value: settings.settings.enableNotifications,
             onChanged: (v) => settings.toggleNotifications(v),
             dense: true,
           ),
           SwitchListTile(
             title: const Text('音效', style: TextStyle(fontSize: 14)),
-            subtitle: Text('专注完成提示音', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+            subtitle: Text(
+              '专注完成提示音',
+              style: TextStyle(fontSize: 11, color: AppColors.textHint),
+            ),
             value: settings.settings.enableSoundEffects,
             onChanged: (v) => settings.toggleSoundEffects(v),
             dense: true,
           ),
           SwitchListTile(
             title: const Text('白噪音', style: TextStyle(fontSize: 14)),
-            subtitle: Text('与流速同步的沉浸音效', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+            subtitle: Text(
+              '与流速同步的沉浸音效',
+              style: TextStyle(fontSize: 11, color: AppColors.textHint),
+            ),
             value: settings.settings.enableWhiteNoise,
             onChanged: (v) => settings.toggleWhiteNoise(v),
             dense: true,
@@ -181,11 +205,18 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Text(
                     '成就进度',
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                    ),
                   ),
                   Text(
                     '${achievementProvider.unlockedCount}/${achievementProvider.totalCount}',
-                    style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -195,7 +226,9 @@ class SettingsScreen extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: achievementProvider.completionRate,
                   backgroundColor: AppColors.surfaceLight,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ),
                   minHeight: 6,
                 ),
               ),
@@ -236,14 +269,22 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 AppStrings.privacyTitle,
-                style: TextStyle(color: AppColors.info, fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: AppColors.info,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             AppStrings.privacyContent,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.5),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -263,7 +304,11 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Text(
             '危险区域',
-            style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: AppColors.danger,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -306,7 +351,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
               );
             },
-            child: const Text('确认清除', style: TextStyle(color: AppColors.danger)),
+            child: const Text(
+              '确认清除',
+              style: TextStyle(color: AppColors.danger),
+            ),
           ),
         ],
       ),

@@ -3,8 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'native_audio_stub.dart'
-    if (dart.library.html) 'web_audio_impl.dart';
+import 'native_audio_stub.dart' if (dart.library.html) 'web_audio_impl.dart';
 
 class AudioService {
   static final AudioService _instance = AudioService._internal();
@@ -23,8 +22,18 @@ class AudioService {
   double get volume => _volume;
 
   final List<Map<String, dynamic>> soundOptions = [
-    {'id': 'rain', 'name': '雨声', 'icon': Icons.water_drop, 'color': Colors.blue},
-    {'id': 'fire', 'name': '炉火', 'icon': Icons.local_fire_department, 'color': Colors.orange},
+    {
+      'id': 'rain',
+      'name': '雨声',
+      'icon': Icons.water_drop,
+      'color': Colors.blue,
+    },
+    {
+      'id': 'fire',
+      'name': '炉火',
+      'icon': Icons.local_fire_department,
+      'color': Colors.orange,
+    },
     {'id': 'ocean', 'name': '海浪', 'icon': Icons.waves, 'color': Colors.teal},
     {'id': 'wind', 'name': '微风', 'icon': Icons.air, 'color': Colors.cyan},
     {'id': 'forest', 'name': '森林', 'icon': Icons.forest, 'color': Colors.green},
@@ -62,7 +71,11 @@ class AudioService {
     return prev + alpha * (input - prev);
   }
 
-  Uint8List _generateNoisePcm(String soundId, double volume, int durationSeconds) {
+  Uint8List _generateNoisePcm(
+    String soundId,
+    double volume,
+    int durationSeconds,
+  ) {
     final totalSamples = _sampleRate * durationSeconds;
     final pcm = Int16List(totalSamples);
     final random = Random();
@@ -107,7 +120,11 @@ class AudioService {
             for (int j = 0; j < crackleLen && (i + j) < totalSamples; j++) {
               final ct = j / _sampleRate;
               final decay = 1.0 - j / crackleLen;
-              final crackle = sin(2 * pi * crackleFreq * ct) * crackleIntensity * decay * 0.4;
+              final crackle =
+                  sin(2 * pi * crackleFreq * ct) *
+                  crackleIntensity *
+                  decay *
+                  0.4;
               final idx = i + j;
               if (idx < totalSamples) {
                 pcm[idx] = (pcm[idx] + (crackle * volume * 32767).toInt())
@@ -153,7 +170,8 @@ class AudioService {
           final gustMod = (sin(lfoPhase) + 1) * 0.5;
           windNoise *= 0.3 + gustMod * 0.7;
           // 呼啸声 - 高频分量
-          final whistle = sin(2 * pi * (400 + gustMod * 200) * t) * 0.02 * gustMod;
+          final whistle =
+              sin(2 * pi * (400 + gustMod * 200) * t) * 0.02 * gustMod;
           sample = windNoise + whistle;
           prevSample2 = prevSample;
           prevSample = windNoise;
@@ -164,12 +182,19 @@ class AudioService {
           double forestNoise = rawNoise * 0.02;
           forestNoise = _lowPass(forestNoise, prevSample, 0.05);
           // 虫鸣背景 - 高频持续声
-          forestNoise += sin(2 * pi * 4500 * t) * 0.008 * (sin(2 * pi * 8 * t) * 0.5 + 0.5);
-          forestNoise += sin(2 * pi * 5200 * t) * 0.005 * (sin(2 * pi * 11 * t) * 0.5 + 0.5);
+          forestNoise +=
+              sin(2 * pi * 4500 * t) *
+              0.008 *
+              (sin(2 * pi * 8 * t) * 0.5 + 0.5);
+          forestNoise +=
+              sin(2 * pi * 5200 * t) *
+              0.005 *
+              (sin(2 * pi * 11 * t) * 0.5 + 0.5);
           // 鸟鸣声 - 随机出现的啁啾声
           if (random.nextDouble() > 0.998) {
             final birdFreq = 2500 + random.nextDouble() * 2500;
-            final chirpLen = (_sampleRate * (0.08 + random.nextDouble() * 0.15)).toInt();
+            final chirpLen = (_sampleRate * (0.08 + random.nextDouble() * 0.15))
+                .toInt();
             final chirpType = random.nextInt(3);
             for (int j = 0; j < chirpLen && (i + j) < totalSamples; j++) {
               final ct = j / _sampleRate;
@@ -183,7 +208,10 @@ class AudioService {
                 // 双音啁啾
                 final freq1 = birdFreq;
                 final freq2 = birdFreq * 1.2;
-                chirp = (sin(2 * pi * freq1 * ct) + sin(2 * pi * freq2 * ct)) * 0.12 * decay;
+                chirp =
+                    (sin(2 * pi * freq1 * ct) + sin(2 * pi * freq2 * ct)) *
+                    0.12 *
+                    decay;
               } else {
                 // 颤音
                 final freq = birdFreq + sin(2 * pi * 30 * ct) * 200;
@@ -226,14 +254,22 @@ class AudioService {
               final decay = 1.0 - j / clinkLen;
               final idx = i + j;
               if (idx < totalSamples) {
-                pcm[idx] = (pcm[idx] + (sin(2 * pi * 3000 * j / _sampleRate) * 0.15 * decay * volume * 32767).toInt())
-                    .clamp(-32768, 32767)
-                    .toInt();
+                pcm[idx] =
+                    (pcm[idx] +
+                            (sin(2 * pi * 3000 * j / _sampleRate) *
+                                    0.15 *
+                                    decay *
+                                    volume *
+                                    32767)
+                                .toInt())
+                        .clamp(-32768, 32767)
+                        .toInt();
               }
             }
           }
           // 背景音乐感 - 微弱的和弦
-          final bgMusic = sin(2 * pi * 261 * t) * 0.005 + sin(2 * pi * 329 * t) * 0.004;
+          final bgMusic =
+              sin(2 * pi * 261 * t) * 0.005 + sin(2 * pi * 329 * t) * 0.004;
           sample = cafeNoise + voice1 + voice2 + voice3 + bgMusic;
           prevSample = cafeNoise;
           break;
@@ -257,13 +293,23 @@ class AudioService {
 
     final result = ByteData(totalSamples * 2);
     for (int i = 0; i < totalSamples; i++) {
-      result.setInt16(i * 2, (pcm[i] * normFactor).toInt().clamp(-32768, 32767), Endian.little);
+      result.setInt16(
+        i * 2,
+        (pcm[i] * normFactor).toInt().clamp(-32768, 32767),
+        Endian.little,
+      );
     }
 
     return result.buffer.asUint8List();
   }
 
-  Uint8List _generateTonePcm(double frequency, int durationMs, {double vol = 0.3, double attackMs = 10, double releaseMs = 50}) {
+  Uint8List _generateTonePcm(
+    double frequency,
+    int durationMs, {
+    double vol = 0.3,
+    double attackMs = 10,
+    double releaseMs = 50,
+  }) {
     final totalSamples = (_sampleRate * durationMs / 1000).toInt();
     final pcm = ByteData(totalSamples * 2);
     final attackSamples = (_sampleRate * attackMs / 1000).toInt();
@@ -278,13 +324,21 @@ class AudioService {
         envelope = (totalSamples - i) / releaseSamples;
       }
       final sample = sin(2 * pi * frequency * t) * vol * envelope;
-      pcm.setInt16(i * 2, (sample * 32767).toInt().clamp(-32768, 32767), Endian.little);
+      pcm.setInt16(
+        i * 2,
+        (sample * 32767).toInt().clamp(-32768, 32767),
+        Endian.little,
+      );
     }
 
     return pcm.buffer.asUint8List();
   }
 
-  Uint8List _generateChordPcm(List<double> frequencies, int durationMs, {double vol = 0.2}) {
+  Uint8List _generateChordPcm(
+    List<double> frequencies,
+    int durationMs, {
+    double vol = 0.2,
+  }) {
     final totalSamples = (_sampleRate * durationMs / 1000).toInt();
     final pcm = ByteData(totalSamples * 2);
 
@@ -301,7 +355,11 @@ class AudioService {
         sample += sin(2 * pi * freq * t) * vol * envelope;
       }
       sample /= frequencies.length;
-      pcm.setInt16(i * 2, (sample * 32767).toInt().clamp(-32768, 32767), Endian.little);
+      pcm.setInt16(
+        i * 2,
+        (sample * 32767).toInt().clamp(-32768, 32767),
+        Endian.little,
+      );
     }
 
     return pcm.buffer.asUint8List();
@@ -368,7 +426,13 @@ class AudioService {
   // 分心警告: 低频 200Hz
   Future<void> playDistractionSound() async {
     try {
-      final pcm = _generateTonePcm(200, 300, vol: 0.4, attackMs: 5, releaseMs: 100);
+      final pcm = _generateTonePcm(
+        200,
+        300,
+        vol: 0.4,
+        attackMs: 5,
+        releaseMs: 100,
+      );
       final wav = _generateWav(pcm, _sampleRate, 1);
       await _sfxPlayer?.play(BytesSource(wav));
       debugPrint('Distraction warning: 200Hz');
@@ -396,7 +460,13 @@ class AudioService {
   // 滴答声: 1kHz 短音
   Future<void> playTickSound() async {
     try {
-      final pcm = _generateTonePcm(1000, 50, vol: 0.15, attackMs: 2, releaseMs: 20);
+      final pcm = _generateTonePcm(
+        1000,
+        50,
+        vol: 0.15,
+        attackMs: 2,
+        releaseMs: 20,
+      );
       final wav = _generateWav(pcm, _sampleRate, 1);
       await _sfxPlayer?.play(BytesSource(wav));
     } catch (e) {

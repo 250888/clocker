@@ -39,12 +39,12 @@ class DurationFormatter {
   static String formatDays(double days) {
     if (days < 1) {
       final hours = (days * 24).round();
-      return '${hours}小时';
+      return '$hours小时';
     } else if (days < 30) {
       return '${days.toStringAsFixed(1)}天';
     } else {
       final months = (days / 30).toStringAsFixed(1);
-      return '${months}个月';
+      return '$months个月';
     }
   }
 

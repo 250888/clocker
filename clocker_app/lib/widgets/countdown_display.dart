@@ -46,7 +46,7 @@ class CountdownDisplay extends StatelessWidget {
               _buildCountdown(
                 context,
                 '现实剩余',
-                '${realDaysRemaining}天',
+                '$realDaysRemaining天',
                 AppColors.textPrimary,
                 Icons.today,
               ),

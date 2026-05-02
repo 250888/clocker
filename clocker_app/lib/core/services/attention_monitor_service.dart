@@ -139,9 +139,7 @@ class AttentionMonitorService {
 
       // 心流状态检测: 连续15分钟+高注意力
       if (_attentionScore >= _flowAttentionThreshold) {
-        if (_focusStartTime == null) {
-          _focusStartTime = now;
-        }
+        _focusStartTime ??= now;
         final focusDuration = now.difference(_focusStartTime!);
         if (focusDuration >= _flowStateThreshold && !_isInFlowState) {
           _isInFlowState = true;

@@ -84,8 +84,10 @@ if ($procId -gt 0) {
       final result = Process.runSync('powershell', [
         '-NoProfile',
         '-NonInteractive',
-        '-ExecutionPolicy', 'Bypass',
-        '-Command', psScript,
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        psScript,
       ]);
 
       if (result.exitCode == 0) {
@@ -98,7 +100,9 @@ if ($procId -gt 0) {
           if (processName.isNotEmpty && processName != _lastDetectedApp) {
             _lastDetectedApp = processName;
             _monitor.reportForegroundApp(processName);
-            debugPrint('Windows foreground: $processName (title: $windowTitle)');
+            debugPrint(
+              'Windows foreground: $processName (title: $windowTitle)',
+            );
           }
         }
       }
@@ -146,7 +150,10 @@ if ($procId -gt 0) {
 
   void _getLinuxForegroundApp() {
     try {
-      final result = Process.runSync('xdotool', ['getactivewindow', 'getwindowname']);
+      final result = Process.runSync('xdotool', [
+        'getactivewindow',
+        'getwindowname',
+      ]);
       if (result.exitCode == 0) {
         final name = result.stdout.toString().trim();
         if (name.isNotEmpty && name != _lastDetectedApp) {

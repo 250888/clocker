@@ -42,6 +42,7 @@ class FocusProvider extends ChangeNotifier {
     final r = _targetDuration - _elapsed;
     return r.isNegative ? Duration.zero : r;
   }
+
   double get progress {
     if (_targetDuration.inSeconds <= 0) return 0.0;
     return (_elapsed.inSeconds / _targetDuration.inSeconds).clamp(0.0, 1.0);
@@ -78,8 +79,12 @@ class FocusProvider extends ChangeNotifier {
     String? selectedNoise,
   }) {
     if (enableWhiteNoise != null) _enableWhiteNoise = enableWhiteNoise;
-    if (enableScreenMonitoring != null) _enableScreenMonitoring = enableScreenMonitoring;
-    if (enableAttentionMonitoring != null) _enableAttentionMonitoring = enableAttentionMonitoring;
+    if (enableScreenMonitoring != null) {
+      _enableScreenMonitoring = enableScreenMonitoring;
+    }
+    if (enableAttentionMonitoring != null) {
+      _enableAttentionMonitoring = enableAttentionMonitoring;
+    }
     if (enableCamera != null) _enableCamera = enableCamera;
     if (selectedNoise != null) _selectedNoise = selectedNoise;
     notifyListeners();
@@ -212,7 +217,8 @@ class FocusProvider extends ChangeNotifier {
         final attentionDistractions = _enableAttentionMonitoring
             ? _attentionMonitor.distractionEvents
             : 0;
-        final wasFlow = _enableAttentionMonitoring &&
+        final wasFlow =
+            _enableAttentionMonitoring &&
             (_attentionMonitor.isInFlowState || _elapsed.inMinutes >= 30);
 
         final completed = _currentSession!.copyWith(
@@ -221,7 +227,8 @@ class FocusProvider extends ChangeNotifier {
           actualDuration: _elapsed,
           vValueEarned: _elapsed.inMinutes / 60.0,
           distractionCount: _distractionCount + attentionDistractions,
-          wasDistractionFree: _distractionCount == 0 && attentionDistractions == 0,
+          wasDistractionFree:
+              _distractionCount == 0 && attentionDistractions == 0,
           wasFlowState: wasFlow,
         );
         await _db.insertFocusSession(completed);

@@ -33,6 +33,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Spacetime CRUD
+  @override
   Future<String> insertSpacetime(Spacetime st) async {
     final list = await _getList(_spacetimesKey);
     list.insert(0, jsonEncode(st.toMap()));
@@ -40,11 +41,13 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     return st.id;
   }
 
+  @override
   Future<List<Spacetime>> getAllSpacetimes() async {
     final list = await _getList(_spacetimesKey);
     return list.map((s) => Spacetime.fromMap(jsonDecode(s))).toList();
   }
 
+  @override
   Future<Spacetime?> getSpacetime(String id) async {
     final spacetimes = await getAllSpacetimes();
     try {
@@ -54,6 +57,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<void> updateSpacetime(Spacetime st) async {
     final list = await _getList(_spacetimesKey);
     final idx = list.indexWhere((s) => jsonDecode(s)['id'] == st.id);
@@ -63,6 +67,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<void> deleteSpacetime(String id) async {
     await deleteTasksForSpacetime(id);
     await deleteFocusSessionsForSpacetime(id);
@@ -74,6 +79,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Task CRUD
+  @override
   Future<String> insertTask(Task task) async {
     final list = await _getList(_tasksKey);
     list.insert(0, jsonEncode(task.toMap()));
@@ -81,6 +87,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     return task.id;
   }
 
+  @override
   Future<List<Task>> getTasksForSpacetime(String spacetimeId) async {
     final list = await _getList(_tasksKey);
     return list
@@ -89,6 +96,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
         .toList();
   }
 
+  @override
   Future<void> updateTask(Task task) async {
     final list = await _getList(_tasksKey);
     final idx = list.indexWhere((s) => jsonDecode(s)['id'] == task.id);
@@ -98,6 +106,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<void> deleteTask(String id) async {
     final list = await _getList(_tasksKey);
     list.removeWhere((s) => jsonDecode(s)['id'] == id);
@@ -111,6 +120,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // FocusSession CRUD
+  @override
   Future<String> insertFocusSession(FocusSession session) async {
     final list = await _getList(_focusSessionsKey);
     list.insert(0, jsonEncode(session.toMap()));
@@ -118,7 +128,10 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     return session.id;
   }
 
-  Future<List<FocusSession>> getFocusSessionsForSpacetime(String spacetimeId) async {
+  @override
+  Future<List<FocusSession>> getFocusSessionsForSpacetime(
+    String spacetimeId,
+  ) async {
     final list = await _getList(_focusSessionsKey);
     return list
         .map((s) => FocusSession.fromMap(jsonDecode(s)))
@@ -126,6 +139,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
         .toList();
   }
 
+  @override
   Future<void> updateFocusSession(FocusSession session) async {
     final list = await _getList(_focusSessionsKey);
     final idx = list.indexWhere((s) => jsonDecode(s)['id'] == session.id);
@@ -142,6 +156,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // DailyRecord CRUD
+  @override
   Future<String> insertDailyRecord(DailyRecord record) async {
     final list = await _getList(_dailyRecordsKey);
     list.insert(0, jsonEncode(record.toMap()));
@@ -149,7 +164,10 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     return record.id;
   }
 
-  Future<List<DailyRecord>> getDailyRecordsForSpacetime(String spacetimeId) async {
+  @override
+  Future<List<DailyRecord>> getDailyRecordsForSpacetime(
+    String spacetimeId,
+  ) async {
     final list = await _getList(_dailyRecordsKey);
     return list
         .map((s) => DailyRecord.fromMap(jsonDecode(s)))
@@ -157,9 +175,11 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
         .toList();
   }
 
+  @override
   Future<DailyRecord?> getDailyRecord(String spacetimeId, DateTime date) async {
     final records = await getDailyRecordsForSpacetime(spacetimeId);
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     try {
       return records.firstWhere((r) => r.date.toString().startsWith(dateStr));
     } catch (_) {
@@ -167,6 +187,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<void> updateDailyRecord(DailyRecord record) async {
     final list = await _getList(_dailyRecordsKey);
     final idx = list.indexWhere((s) => jsonDecode(s)['id'] == record.id);
@@ -183,6 +204,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Achievement CRUD
+  @override
   Future<void> initAchievements() async {
     final list = await _getList(_achievementsKey);
     if (list.isEmpty) {
@@ -193,11 +215,13 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<List<Achievement>> getAllAchievements() async {
     final list = await _getList(_achievementsKey);
     return list.map((s) => Achievement.fromMap(jsonDecode(s))).toList();
   }
 
+  @override
   Future<void> updateAchievement(Achievement achievement) async {
     final list = await _getList(_achievementsKey);
     final idx = list.indexWhere((s) => jsonDecode(s)['id'] == achievement.id);
@@ -208,11 +232,16 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Settings
+  @override
   Future<void> saveSettings(AppSettings settings) async {
     final prefs = await _prefs;
-    await prefs.setString('$_prefix$_settingsKey', jsonEncode(settings.toMap()));
+    await prefs.setString(
+      '$_prefix$_settingsKey',
+      jsonEncode(settings.toMap()),
+    );
   }
 
+  @override
   Future<AppSettings> getSettings() async {
     final prefs = await _prefs;
     final jsonStr = prefs.getString('$_prefix$_settingsKey');
@@ -221,6 +250,7 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Clear all data
+  @override
   Future<void> clearAllData() async {
     final prefs = await _prefs;
     await prefs.remove('$_prefix$_spacetimesKey');

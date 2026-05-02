@@ -20,9 +20,7 @@ class ReportScreen extends StatelessWidget {
     final st = spacetimeProvider.activeSpacetime!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('时空报告'),
-      ),
+      appBar: AppBar(title: const Text('时空报告')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -105,10 +103,7 @@ class ReportScreen extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              color: AppColors.textHint,
-              fontSize: 10,
-            ),
+            style: TextStyle(color: AppColors.textHint, fontSize: 10),
             textAlign: TextAlign.center,
           ),
         ],
@@ -116,7 +111,11 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFlowRateChart(BuildContext context, Spacetime st, SpacetimeProvider provider) {
+  Widget _buildFlowRateChart(
+    BuildContext context,
+    Spacetime st,
+    SpacetimeProvider provider,
+  ) {
     final engine = provider.getEngine()!;
 
     final dataPoints = <FlSpot>[];
@@ -150,10 +149,7 @@ class ReportScreen extends StatelessWidget {
             height: 200,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                ),
+                gridData: FlGridData(show: true, drawVerticalLine: false),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -161,7 +157,10 @@ class ReportScreen extends StatelessWidget {
                       reservedSize: 35,
                       getTitlesWidget: (value, meta) => Text(
                         '${value.toStringAsFixed(1)}x',
-                        style: TextStyle(color: AppColors.textHint, fontSize: 10),
+                        style: TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
@@ -170,12 +169,19 @@ class ReportScreen extends StatelessWidget {
                       showTitles: true,
                       getTitlesWidget: (value, meta) => Text(
                         '${(value * 10).toInt()}%',
-                        style: TextStyle(color: AppColors.textHint, fontSize: 10),
+                        style: TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -195,10 +201,15 @@ class ReportScreen extends StatelessWidget {
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (_) => AppColors.surface,
                     getTooltipItems: (spots) => spots
-                        .map((s) => LineTooltipItem(
-                              '自律度: ${(s.x * 10).toInt()}%\n流速: ${s.y.toStringAsFixed(2)}x',
-                              const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-                            ))
+                        .map(
+                          (s) => LineTooltipItem(
+                            '自律度: ${(s.x * 10).toInt()}%\n流速: ${s.y.toStringAsFixed(2)}x',
+                            const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -217,10 +228,15 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDisciplineBreakdown(BuildContext context, Spacetime st, SpacetimeProvider provider) {
+  Widget _buildDisciplineBreakdown(
+    BuildContext context,
+    Spacetime st,
+    SpacetimeProvider provider,
+  ) {
     final discipline = st.disciplinePercentage;
     final focusRatio = st.totalFocusHours > 0
-        ? (st.totalFocusHours / (st.totalFocusHours + st.totalScreenPenalty)).clamp(0.0, 1.0)
+        ? (st.totalFocusHours / (st.totalFocusHours + st.totalScreenPenalty))
+              .clamp(0.0, 1.0)
         : 0.0;
     final engine = provider.getEngine()!;
 
@@ -237,10 +253,7 @@ class ReportScreen extends StatelessWidget {
             children: [
               Icon(Icons.pie_chart, color: AppColors.accent, size: 18),
               const SizedBox(width: 6),
-              Text(
-                '自律分析',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('自律分析', style: Theme.of(context).textTheme.titleMedium),
             ],
           ),
           const SizedBox(height: 16),
@@ -248,14 +261,33 @@ class ReportScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _buildProgressBar('专注占比', focusRatio, AppColors.primary),
           const SizedBox(height: 10),
-          _buildProgressBar('任务完成率', st.totalTaskValue > 0 ? (st.totalTaskValue / (st.totalFocusHours + st.totalTaskValue)).clamp(0.0, 1.0) : 0.0, AppColors.accent),
+          _buildProgressBar(
+            '任务完成率',
+            st.totalTaskValue > 0
+                ? (st.totalTaskValue / (st.totalFocusHours + st.totalTaskValue))
+                      .clamp(0.0, 1.0)
+                : 0.0,
+            AppColors.accent,
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMetricItem('v值', '${st.currentV.toStringAsFixed(1)}h', AppColors.accent),
-              _buildMetricItem('洛伦兹因子', engine.lorentzFactor(st.currentV).toStringAsFixed(3), AppColors.primary),
-              _buildMetricItem('时间盈亏', DurationFormatter.formatDays(st.timeEarned), st.timeEarned >= 0 ? AppColors.success : AppColors.danger),
+              _buildMetricItem(
+                'v值',
+                '${st.currentV.toStringAsFixed(1)}h',
+                AppColors.accent,
+              ),
+              _buildMetricItem(
+                '洛伦兹因子',
+                engine.lorentzFactor(st.currentV).toStringAsFixed(3),
+                AppColors.primary,
+              ),
+              _buildMetricItem(
+                '时间盈亏',
+                DurationFormatter.formatDays(st.timeEarned),
+                st.timeEarned >= 0 ? AppColors.success : AppColors.danger,
+              ),
             ],
           ),
         ],
@@ -270,10 +302,17 @@ class ReportScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text(
+              label,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
             Text(
               DurationFormatter.formatPercentage(value),
-              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -294,7 +333,14 @@ class ReportScreen extends StatelessWidget {
   Widget _buildMetricItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(label, style: TextStyle(color: AppColors.textHint, fontSize: 10)),
       ],
@@ -318,7 +364,8 @@ class ReportScreen extends StatelessWidget {
         'icon': Icons.warning,
         'color': AppColors.danger,
         'title': '流速过快警告',
-        'desc': '当前流速${DurationFormatter.formatFlowRate(st.currentFlowRate)}，截止日正在加速到来，请立即行动！',
+        'desc':
+            '当前流速${DurationFormatter.formatFlowRate(st.currentFlowRate)}，截止日正在加速到来，请立即行动！',
       });
     }
 
@@ -353,46 +400,49 @@ class ReportScreen extends StatelessWidget {
             children: [
               Icon(Icons.insights, color: AppColors.primary, size: 18),
               const SizedBox(width: 6),
-              Text(
-                '个性化建议',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('个性化建议', style: Theme.of(context).textTheme.titleMedium),
             ],
           ),
           const SizedBox(height: 12),
-          ...insights.map((i) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(i['icon'] as IconData, color: i['color'] as Color, size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            i['title'] as String,
-                            style: TextStyle(
-                              color: i['color'] as Color,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+          ...insights.map(
+            (i) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    i['icon'] as IconData,
+                    color: i['color'] as Color,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          i['title'] as String,
+                          style: TextStyle(
+                            color: i['color'] as Color,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            i['desc'] as String,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          i['desc'] as String,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

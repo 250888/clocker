@@ -26,11 +26,7 @@ class DatabaseHelper implements DatabaseHelperInterface {
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, _databaseName);
 
-    return openDatabase(
-      path,
-      version: _databaseVersion,
-      onCreate: _onCreate,
-    );
+    return openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
   }
 
   static Future<void> _onCreate(Database db, int version) async {
@@ -156,18 +152,21 @@ class DatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Spacetime CRUD
+  @override
   Future<String> insertSpacetime(Spacetime st) async {
     final db = await database;
     await db.insert('spacetimes', st.toMap());
     return st.id;
   }
 
+  @override
   Future<List<Spacetime>> getAllSpacetimes() async {
     final db = await database;
     final maps = await db.query('spacetimes', orderBy: 'createdAt DESC');
     return maps.map((m) => Spacetime.fromMap(m)).toList();
   }
 
+  @override
   Future<Spacetime?> getSpacetime(String id) async {
     final db = await database;
     final maps = await db.query('spacetimes', where: 'id = ?', whereArgs: [id]);
@@ -175,26 +174,39 @@ class DatabaseHelper implements DatabaseHelperInterface {
     return Spacetime.fromMap(maps.first);
   }
 
+  @override
   Future<void> updateSpacetime(Spacetime st) async {
     final db = await database;
-    await db.update('spacetimes', st.toMap(), where: 'id = ?', whereArgs: [st.id]);
+    await db.update(
+      'spacetimes',
+      st.toMap(),
+      where: 'id = ?',
+      whereArgs: [st.id],
+    );
   }
 
+  @override
   Future<void> deleteSpacetime(String id) async {
     final db = await database;
     await db.delete('tasks', where: 'spacetimeId = ?', whereArgs: [id]);
-    await db.delete('focus_sessions', where: 'spacetimeId = ?', whereArgs: [id]);
+    await db.delete(
+      'focus_sessions',
+      where: 'spacetimeId = ?',
+      whereArgs: [id],
+    );
     await db.delete('daily_records', where: 'spacetimeId = ?', whereArgs: [id]);
     await db.delete('spacetimes', where: 'id = ?', whereArgs: [id]);
   }
 
   // Task CRUD
+  @override
   Future<String> insertTask(Task task) async {
     final db = await database;
     await db.insert('tasks', task.toMap());
     return task.id;
   }
 
+  @override
   Future<List<Task>> getTasksForSpacetime(String spacetimeId) async {
     final db = await database;
     final maps = await db.query(
@@ -206,24 +218,35 @@ class DatabaseHelper implements DatabaseHelperInterface {
     return maps.map((m) => Task.fromMap(m)).toList();
   }
 
+  @override
   Future<void> updateTask(Task task) async {
     final db = await database;
-    await db.update('tasks', task.toMap(), where: 'id = ?', whereArgs: [task.id]);
+    await db.update(
+      'tasks',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
   }
 
+  @override
   Future<void> deleteTask(String id) async {
     final db = await database;
     await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
   // FocusSession CRUD
+  @override
   Future<String> insertFocusSession(FocusSession session) async {
     final db = await database;
     await db.insert('focus_sessions', session.toMap());
     return session.id;
   }
 
-  Future<List<FocusSession>> getFocusSessionsForSpacetime(String spacetimeId) async {
+  @override
+  Future<List<FocusSession>> getFocusSessionsForSpacetime(
+    String spacetimeId,
+  ) async {
     final db = await database;
     final maps = await db.query(
       'focus_sessions',
@@ -234,19 +257,29 @@ class DatabaseHelper implements DatabaseHelperInterface {
     return maps.map((m) => FocusSession.fromMap(m)).toList();
   }
 
+  @override
   Future<void> updateFocusSession(FocusSession session) async {
     final db = await database;
-    await db.update('focus_sessions', session.toMap(), where: 'id = ?', whereArgs: [session.id]);
+    await db.update(
+      'focus_sessions',
+      session.toMap(),
+      where: 'id = ?',
+      whereArgs: [session.id],
+    );
   }
 
   // DailyRecord CRUD
+  @override
   Future<String> insertDailyRecord(DailyRecord record) async {
     final db = await database;
     await db.insert('daily_records', record.toMap());
     return record.id;
   }
 
-  Future<List<DailyRecord>> getDailyRecordsForSpacetime(String spacetimeId) async {
+  @override
+  Future<List<DailyRecord>> getDailyRecordsForSpacetime(
+    String spacetimeId,
+  ) async {
     final db = await database;
     final maps = await db.query(
       'daily_records',
@@ -257,9 +290,11 @@ class DatabaseHelper implements DatabaseHelperInterface {
     return maps.map((m) => DailyRecord.fromMap(m)).toList();
   }
 
+  @override
   Future<DailyRecord?> getDailyRecord(String spacetimeId, DateTime date) async {
     final db = await database;
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final maps = await db.query(
       'daily_records',
       where: 'spacetimeId = ? AND date LIKE ?',
@@ -269,12 +304,19 @@ class DatabaseHelper implements DatabaseHelperInterface {
     return DailyRecord.fromMap(maps.first);
   }
 
+  @override
   Future<void> updateDailyRecord(DailyRecord record) async {
     final db = await database;
-    await db.update('daily_records', record.toMap(), where: 'id = ?', whereArgs: [record.id]);
+    await db.update(
+      'daily_records',
+      record.toMap(),
+      where: 'id = ?',
+      whereArgs: [record.id],
+    );
   }
 
   // Achievement CRUD
+  @override
   Future<void> initAchievements() async {
     final db = await database;
     final count = (await db.query('achievements')).length;
@@ -285,18 +327,29 @@ class DatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<List<Achievement>> getAllAchievements() async {
     final db = await database;
-    final maps = await db.query('achievements', orderBy: 'tier ASC, category ASC');
+    final maps = await db.query(
+      'achievements',
+      orderBy: 'tier ASC, category ASC',
+    );
     return maps.map((m) => Achievement.fromMap(m)).toList();
   }
 
+  @override
   Future<void> updateAchievement(Achievement achievement) async {
     final db = await database;
-    await db.update('achievements', achievement.toMap(), where: 'id = ?', whereArgs: [achievement.id]);
+    await db.update(
+      'achievements',
+      achievement.toMap(),
+      where: 'id = ?',
+      whereArgs: [achievement.id],
+    );
   }
 
   // Settings
+  @override
   Future<void> saveSettings(AppSettings settings) async {
     final db = await database;
     final count = (await db.query('app_settings')).length;
@@ -307,6 +360,7 @@ class DatabaseHelper implements DatabaseHelperInterface {
     }
   }
 
+  @override
   Future<AppSettings> getSettings() async {
     final db = await database;
     final maps = await db.query('app_settings');
@@ -315,6 +369,7 @@ class DatabaseHelper implements DatabaseHelperInterface {
   }
 
   // Clear all data
+  @override
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('focus_sessions');
