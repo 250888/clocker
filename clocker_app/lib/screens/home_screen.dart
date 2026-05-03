@@ -146,11 +146,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   CountdownDisplay(
-                    appDaysRemaining: st.appDaysRemaining,
+                    appDaysRemaining: st.effectiveAppDaysRemaining,
                     realDaysRemaining: st.realDaysRemaining,
-                    flowRate: st.currentFlowRate,
-                    timeEarned: st.timeEarned,
-                    timeLost: 0,
+                    flowRate: st.effectiveFlowRate,
+                    timeEarnedDays: st.timeEarnedDays,
+                    timeLostDays: st.timeLostDays,
+                    deadlineWarningDays: st.effectiveDeadlineWarningDays,
+                    isInFlowBonus: st.isInFlowBonus,
                   ),
                   const SizedBox(height: 24),
                   _buildLossWarning(context, st),
@@ -158,6 +160,8 @@ class HomeScreen extends StatelessWidget {
                   _buildMiniTasks(context),
                   const SizedBox(height: 16),
                   _buildRecentAchievements(context),
+                  const SizedBox(height: 16),
+                  _buildTimeControls(context, st, provider),
                   const SizedBox(height: 16),
                   _buildPrivacySection(context),
                   const SizedBox(height: 12),
@@ -172,7 +176,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildLossWarning(BuildContext context, Spacetime st) {
-    if (st.currentFlowRate <= 1.0) {
+    if (st.effectiveFlowRate <= 1.0) {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -342,6 +346,199 @@ class HomeScreen extends StatelessWidget {
               Navigator.pop(context);
             },
             child: const Text('删除', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeControls(
+    BuildContext context,
+    Spacetime st,
+    SpacetimeProvider provider,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: AppColors.accent, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                '时空操控',
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTimeControlButton(
+                  context,
+                  icon: Icons.ac_unit,
+                  label: '时空冻结',
+                  subtitle: '每周1次 · 24h流速固定',
+                  isAvailable: st.canFreeze,
+                  onTap: () => _confirmFreeze(context, provider),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTimeControlButton(
+                  context,
+                  icon: Icons.history,
+                  label: '时间回溯',
+                  subtitle: '已完成任务值: ${st.totalTaskValue.toStringAsFixed(1)}h',
+                  isAvailable: st.canRewind,
+                  onTap: () => _confirmRewind(context, provider),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeControlButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required bool isAvailable,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: isAvailable ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isAvailable
+              ? AppColors.accent.withValues(alpha: 0.08)
+              : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isAvailable
+                ? AppColors.accent.withValues(alpha: 0.3)
+                : AppColors.surfaceLight,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isAvailable ? AppColors.accent : AppColors.textHint,
+              size: 24,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isAvailable ? AppColors.accent : AppColors.textHint,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(color: AppColors.textHint, fontSize: 10),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmFreeze(BuildContext context, SpacetimeProvider provider) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            Icon(Icons.ac_unit, color: AppColors.accent, size: 22),
+            const SizedBox(width: 8),
+            const Text('时空冻结'),
+          ],
+        ),
+        content: const Text(
+          '确定要使用时空冻结吗？\n\n冻结后24小时内，你的流速将保持当前值不变，应对突发情况。\n每次冻结后需等待7天才能再次使用。',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await provider.useTimeFreeze();
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('时空已冻结，24小时内流速固定'),
+                    backgroundColor: AppColors.accent,
+                  ),
+                );
+              }
+            },
+            child: const Text('确认冻结'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmRewind(BuildContext context, SpacetimeProvider provider) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            Icon(Icons.history, color: AppColors.accent, size: 22),
+            const SizedBox(width: 8),
+            const Text('时间回溯'),
+          ],
+        ),
+        content: const Text(
+          '确定要使用时间回溯吗？\n\n回退APP内日期，挽回部分因失误而损失的时间。\n每完成5小时任务值可解锁一次。',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await provider.useTimeRewind();
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('时间已回溯，继续加油！'),
+                    backgroundColor: AppColors.accent,
+                  ),
+                );
+              }
+            },
+            child: const Text('确认回溯'),
           ),
         ],
       ),

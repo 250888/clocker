@@ -1,10 +1,6 @@
 import 'dart:math';
 
-enum FlowMode {
-  relativistic,
-  linear,
-  exponential,
-}
+enum FlowMode { relativistic, linear, exponential }
 
 class LorentzEngine {
   final double v0;
@@ -47,14 +43,27 @@ class LorentzEngine {
     required double v,
   }) {
     final flowRate = calculateFlowRate(v);
-    return realDaysRemaining * flowRate;
+    if (flowRate <= 0.001) return double.infinity;
+    return realDaysRemaining / flowRate;
   }
 
-  double calculateTimeEarned(double realHours, double v) {
+  double calculateTimeEarned(double realHoursPassed, double v) {
     final flowRate = calculateFlowRate(v);
-    final normalTime = realHours;
-    final appTime = realHours * flowRate;
+    final normalTime = realHoursPassed;
+    final appTime = realHoursPassed * flowRate;
     return normalTime - appTime;
+  }
+
+  double calculateWarningDays({
+    required double realDaysRemaining,
+    required double v,
+  }) {
+    final effectiveDays = calculateAppDaysRemaining(
+      realDaysRemaining: realDaysRemaining,
+      v: v,
+    );
+    if (effectiveDays.isInfinite) return 0;
+    return realDaysRemaining - effectiveDays;
   }
 
   double calculateVFromFocusHours(double focusHours) {
@@ -101,11 +110,7 @@ class LorentzEngine {
     };
   }
 
-  LorentzEngine copyWith({
-    double? v0,
-    double? c,
-    FlowMode? flowMode,
-  }) {
+  LorentzEngine copyWith({double? v0, double? c, FlowMode? flowMode}) {
     return LorentzEngine(
       v0: v0 ?? this.v0,
       c: c ?? this.c,

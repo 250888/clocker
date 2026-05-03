@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
 import '../providers/focus_provider.dart';
 import '../models/focus_session.dart';
@@ -110,6 +111,10 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
               _buildNoiseSelector(focusProvider),
               const SizedBox(height: 16),
               _buildMonitorToggles(focusProvider),
+              if (focusProvider.isInForceBreak) ...[
+                const SizedBox(height: 16),
+                _buildForceBreakBanner(focusProvider),
+              ],
             ] else ...[
               _buildFocusStats(focusProvider, spacetimeProvider),
               const SizedBox(height: 12),
@@ -385,9 +390,13 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final engine = spacetimeProvider.getEngine();
     final safeC = st.c > 0 ? st.c : 1.0;
     final currentV = st.currentV + (focusProvider.elapsed.inMinutes / 60.0);
-    final newFlowRate = engine != null
-        ? engine.calculateFlowRate(currentV.clamp(0.0, safeC))
+    final clampedV = currentV.clamp(0.0, safeC);
+    final rawFlowRate = engine != null
+        ? engine.calculateFlowRate(clampedV)
         : 1.0;
+    final newFlowRate = engine != null && engine.isInFlowState(clampedV)
+        ? engine.flowStateBonus(clampedV)
+        : rawFlowRate;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -742,6 +751,72 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildForceBreakBanner(FocusProvider focusProvider) {
+    final remaining = focusProvider.remainingForceBreak;
+    final remainingMin = remaining.inMinutes;
+    final remainingSec = remaining.inSeconds % 60;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.coffee, color: AppColors.warning, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '强制休息中',
+                      style: TextStyle(
+                        color: AppColors.warning,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '连续专注已满4小时，请休息${remainingMin}分${remainingSec}秒后再继续',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value:
+                  1 -
+                  (remaining.inMilliseconds /
+                          _forceBreakDuration.inMilliseconds)
+                      .clamp(0.0, 1.0),
+              backgroundColor: AppColors.surfaceLight,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.warning,
+              ),
+              minHeight: 4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const Duration _forceBreakDuration = Duration(minutes: 30);
+
   Widget _buildVolumeControl(FocusProvider focusProvider) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -921,7 +996,17 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     FocusProvider focusProvider,
     SpacetimeProvider spacetimeProvider,
   ) {
-    focusProvider.startFocus(spacetimeProvider.activeSpacetime!.id);
+    final st = spacetimeProvider.activeSpacetime!;
+    focusProvider.setFlowRateGetter(() {
+      final safeC = st.c > 0 ? st.c : 1.0;
+      final engine = LorentzEngine(v0: st.v0, c: safeC, flowMode: st.flowMode);
+      final clampedV = st.currentV.clamp(0.0, safeC);
+      if (engine.isInFlowState(clampedV)) {
+        return engine.flowStateBonus(clampedV);
+      }
+      return engine.calculateFlowRate(clampedV);
+    });
+    focusProvider.startFocus(st.id);
   }
 
   Future<void> _endFocus(

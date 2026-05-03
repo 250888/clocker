@@ -32,6 +32,8 @@ class ReportScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildDisciplineBreakdown(context, st, spacetimeProvider),
             const SizedBox(height: 20),
+            _buildTimeBalance(context, st, spacetimeProvider),
+            const SizedBox(height: 20),
             _buildInsights(context, st),
           ],
         ),
@@ -66,9 +68,11 @@ class ReportScreen extends StatelessWidget {
           child: _buildSummaryCard(
             context,
             '当前流速',
-            DurationFormatter.formatFlowRate(st.currentFlowRate),
+            DurationFormatter.formatFlowRate(st.effectiveFlowRate),
             Icons.speed,
-            st.currentFlowRate <= 1.0 ? AppColors.flowSlow : AppColors.flowFast,
+            st.effectiveFlowRate <= 1.0
+                ? AppColors.flowSlow
+                : AppColors.flowFast,
           ),
         ),
       ],
@@ -285,8 +289,8 @@ class ReportScreen extends StatelessWidget {
               ),
               _buildMetricItem(
                 '时间盈亏',
-                DurationFormatter.formatDays(st.timeEarned),
-                st.timeEarned >= 0 ? AppColors.success : AppColors.danger,
+                DurationFormatter.formatHours(st.timeEarnedDays * 24),
+                st.timeEarnedDays >= 0 ? AppColors.success : AppColors.danger,
               ),
             ],
           ),
@@ -347,15 +351,130 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildTimeBalance(
+    BuildContext context,
+    Spacetime st,
+    SpacetimeProvider provider,
+  ) {
+    final earnedH = st.timeEarnedDays * 24;
+    final lostH = st.timeLostDays * 24;
+    final net = earnedH - lostH;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppColors.cardGradient,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet,
+                color: AppColors.primary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text('时间盈亏报告', style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTimeBalanceItem(
+                context,
+                '已赚取',
+                DurationFormatter.formatHours(earnedH),
+                Icons.add_circle_outline,
+                AppColors.success,
+              ),
+              Container(width: 1, height: 40, color: AppColors.surfaceLight),
+              _buildTimeBalanceItem(
+                context,
+                '已损失',
+                DurationFormatter.formatHours(lostH),
+                Icons.remove_circle_outline,
+                AppColors.danger,
+              ),
+              Container(width: 1, height: 40, color: AppColors.surfaceLight),
+              _buildTimeBalanceItem(
+                context,
+                '净盈亏',
+                DurationFormatter.formatHours(net),
+                net >= 0 ? Icons.trending_up : Icons.trending_down,
+                net >= 0 ? AppColors.success : AppColors.danger,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildMetricItem(
+                '时空冻结',
+                '${st.timeFreezesUsed}/1次',
+                st.canFreeze ? AppColors.accent : AppColors.textHint,
+              ),
+              _buildMetricItem(
+                '时间回溯',
+                '${st.timeRewindsUsed}次',
+                st.canRewind ? AppColors.accent : AppColors.textHint,
+              ),
+              _buildMetricItem(
+                '娱乐惩罚',
+                '${st.totalScreenPenalty.toStringAsFixed(1)}h',
+                st.totalScreenPenalty > 0
+                    ? AppColors.danger
+                    : AppColors.textHint,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeBalanceItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(label, style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+      ],
+    );
+  }
+
   Widget _buildInsights(BuildContext context, Spacetime st) {
     final insights = <Map<String, dynamic>>[];
 
     if (st.disciplinePercentage >= 0.6) {
+      final effectiveRate = st.effectiveFlowRate;
+      final bonusPercent =
+          ((st.currentFlowRate - effectiveRate) / st.currentFlowRate * 100)
+              .toStringAsFixed(0);
       insights.add({
         'icon': Icons.bolt,
         'color': AppColors.flowSlow,
-        'title': '心流状态',
-        'desc': '你的自律度超过60%，已进入心流钟慢模式，额外降低10%-20%流速！',
+        'title': '心流钟慢模式已激活',
+        'desc':
+            '自律度超过60%，流速额外降低约$bonusPercent%，当前有效流速${DurationFormatter.formatFlowRate(effectiveRate)}。继续保持！',
       });
     }
 

@@ -38,8 +38,8 @@ class Spacetime {
     this.lastFreezeTime,
     this.emoji,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   double get currentV {
     final raw = totalFocusHours + totalTaskValue - totalScreenPenalty;
@@ -65,6 +65,12 @@ class Spacetime {
     return engine.calculateFlowRate(currentV);
   }
 
+  double get effectiveFlowRate {
+    final engine = LorentzEngine(v0: v0, c: c, flowMode: flowMode);
+    if (isInFlowState) return engine.flowStateBonus(currentV);
+    return engine.calculateFlowRate(currentV);
+  }
+
   double get disciplinePercentage {
     if (c <= 0) return 0;
     return (currentV / c).clamp(0.0, 1.0);
@@ -74,9 +80,46 @@ class Spacetime {
     return disciplinePercentage >= 0.6;
   }
 
-  double get timeEarned {
+  bool get isInFlowBonus => isInFlowState && totalFocusHours > 0;
+
+  double get timeEarnedInHours {
+    final elapsed = DateTime.now().difference(createdAt);
+    final realHours = elapsed.inMinutes / 60.0;
     final engine = LorentzEngine(v0: v0, c: c, flowMode: flowMode);
-    return engine.calculateTimeEarned(realDaysRemaining.toDouble(), currentV);
+    return engine.calculateTimeEarned(realHours, currentV);
+  }
+
+  double get timeLostInHours {
+    final earned = timeEarnedInHours;
+    return earned < 0 ? -earned : 0;
+  }
+
+  double get timeEarnedDays {
+    return timeEarnedInHours / 24;
+  }
+
+  double get timeLostDays {
+    return timeLostInHours / 24;
+  }
+
+  double get effectiveAppDaysRemaining {
+    final effectiveRate = effectiveFlowRate;
+    if (effectiveRate <= 0.001) return double.infinity;
+    return realDaysRemaining.toDouble() / effectiveRate;
+  }
+
+  double get deadlineWarningDays {
+    final engine = LorentzEngine(v0: v0, c: c, flowMode: flowMode);
+    return engine.calculateWarningDays(
+      realDaysRemaining: realDaysRemaining.toDouble(),
+      v: currentV,
+    );
+  }
+
+  double get effectiveDeadlineWarningDays {
+    final effectiveDays = effectiveAppDaysRemaining;
+    if (effectiveDays.isInfinite) return 0;
+    return realDaysRemaining.toDouble() - effectiveDays;
   }
 
   bool get canFreeze {
@@ -86,6 +129,11 @@ class Spacetime {
       if (daysSinceLastFreeze < 7) return false;
     }
     return timeFreezesUsed < 1;
+  }
+
+  bool get canRewind {
+    final earnedRewinds = (totalTaskValue / 5).floor() + 1;
+    return timeRewindsUsed < earnedRewinds;
   }
 
   Spacetime copyWith({

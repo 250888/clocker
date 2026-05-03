@@ -22,7 +22,18 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
   FlowMode _flowMode = FlowMode.relativistic;
   String _selectedEmoji = '🌌';
 
-  final List<String> _emojis = ['🌌', '📚', '🎓', '💼', '🏋️', '🎨', '🎵', '💻', '🔬', '📝'];
+  final List<String> _emojis = [
+    '🌌',
+    '📚',
+    '🎓',
+    '💼',
+    '🏋️',
+    '🎨',
+    '🎵',
+    '💻',
+    '🔬',
+    '📝',
+  ];
 
   @override
   void dispose() {
@@ -33,9 +44,7 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.createSpacetime),
-      ),
+      appBar: AppBar(title: const Text(AppStrings.createSpacetime)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -90,7 +99,9 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
                       ? Border.all(color: AppColors.primary, width: 2)
                       : null,
                 ),
-                child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+                child: Center(
+                  child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                ),
               ),
             );
           }).toList(),
@@ -156,7 +167,10 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(AppStrings.baseFlowRate, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              AppStrings.baseFlowRate,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -175,10 +189,7 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          '完全摆烂时的流速倍率，越高惩罚越重',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text('完全摆烂时的流速倍率，越高惩罚越重', style: Theme.of(context).textTheme.bodySmall),
         Slider(
           value: _v0,
           min: 1.0,
@@ -197,7 +208,10 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(AppStrings.disciplineLimit, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              AppStrings.disciplineLimit,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -216,10 +230,7 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          '单日有效专注上限（光速不可超越）',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text('单日有效专注上限（光速不可超越）', style: Theme.of(context).textTheme.bodySmall),
         Slider(
           value: _c,
           min: 2.0,
@@ -238,7 +249,10 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(AppStrings.advanceDays, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              AppStrings.advanceDays,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -271,7 +285,10 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppStrings.flowMode, style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          AppStrings.flowMode,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -294,7 +311,9 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surfaceLight,
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.2)
+                : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(10),
             border: isSelected ? Border.all(color: AppColors.primary) : null,
           ),
@@ -335,20 +354,32 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
               const SizedBox(width: 6),
               Text(
                 '效果预览',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.primary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildPreviewRow('完全摆烂', '${fullSlack.toStringAsFixed(2)}x', AppColors.danger),
-          _buildPreviewRow('50%自律', '${halfEffort.toStringAsFixed(2)}x', AppColors.warning),
-          _buildPreviewRow('90%自律', '${fullEffort.toStringAsFixed(2)}x', AppColors.success),
+          _buildPreviewRow(
+            '完全摆烂',
+            '${fullSlack.toStringAsFixed(2)}x',
+            AppColors.danger,
+          ),
+          _buildPreviewRow(
+            '50%自律',
+            '${halfEffort.toStringAsFixed(2)}x',
+            AppColors.warning,
+          ),
+          _buildPreviewRow(
+            '90%自律',
+            '${fullEffort.toStringAsFixed(2)}x',
+            AppColors.success,
+          ),
           const Divider(color: AppColors.surfaceLight, height: 20),
           _buildPreviewRow(
             '摆烂时APP剩余',
-            '${(daysRemaining * fullSlack).toStringAsFixed(0)}天',
+            '${(daysRemaining / fullSlack).toStringAsFixed(0)}天',
             AppColors.danger,
           ),
           _buildPreviewRow(
@@ -367,8 +398,18 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -381,7 +422,9 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
       child: ElevatedButton(
         onPressed: _createSpacetime,
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         child: const Text('生成自律时空', style: TextStyle(fontSize: 16)),
       ),

@@ -6,16 +6,20 @@ class CountdownDisplay extends StatelessWidget {
   final double appDaysRemaining;
   final int realDaysRemaining;
   final double flowRate;
-  final double timeEarned;
-  final double timeLost;
+  final double timeEarnedDays;
+  final double timeLostDays;
+  final double deadlineWarningDays;
+  final bool isInFlowBonus;
 
   const CountdownDisplay({
     super.key,
     required this.appDaysRemaining,
     required this.realDaysRemaining,
     required this.flowRate,
-    this.timeEarned = 0,
-    this.timeLost = 0,
+    this.timeEarnedDays = 0,
+    this.timeLostDays = 0,
+    this.deadlineWarningDays = 0,
+    this.isInFlowBonus = false,
   });
 
   @override
@@ -38,11 +42,7 @@ class CountdownDisplay extends StatelessWidget {
                 flowRate <= 1.0 ? AppColors.flowSlow : AppColors.flowFast,
                 Icons.access_time,
               ),
-              Container(
-                width: 1,
-                height: 50,
-                color: AppColors.surfaceLight,
-              ),
+              Container(width: 1, height: 50, color: AppColors.surfaceLight),
               _buildCountdown(
                 context,
                 '现实剩余',
@@ -52,6 +52,62 @@ class CountdownDisplay extends StatelessWidget {
               ),
             ],
           ),
+          if (isInFlowBonus) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.flowSlow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.flowSlow.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bolt, color: AppColors.flowSlow, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    '心流钟慢模式 · 流速额外降低15%',
+                    style: TextStyle(
+                      color: AppColors.flowSlow,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (deadlineWarningDays > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning_amber, color: AppColors.danger, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    '截止日已提前 ${deadlineWarningDays.toStringAsFixed(1)} 天',
+                    style: TextStyle(
+                      color: AppColors.danger,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -65,14 +121,14 @@ class CountdownDisplay extends StatelessWidget {
                 _buildTimeStat(
                   context,
                   '已赚取',
-                  DurationFormatter.formatDays(timeEarned),
+                  DurationFormatter.formatHours(timeEarnedDays * 24),
                   AppColors.success,
                   Icons.add_circle_outline,
                 ),
                 _buildTimeStat(
                   context,
                   '已损失',
-                  DurationFormatter.formatDays(timeLost),
+                  DurationFormatter.formatHours(timeLostDays * 24),
                   AppColors.danger,
                   Icons.remove_circle_outline,
                 ),
@@ -107,10 +163,7 @@ class CountdownDisplay extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              color: AppColors.textHint,
-              fontSize: 11,
-            ),
+            style: TextStyle(color: AppColors.textHint, fontSize: 11),
           ),
         ],
       ),
@@ -142,10 +195,7 @@ class CountdownDisplay extends StatelessWidget {
             ),
             Text(
               label,
-              style: TextStyle(
-                color: AppColors.textHint,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: AppColors.textHint, fontSize: 10),
             ),
           ],
         ),

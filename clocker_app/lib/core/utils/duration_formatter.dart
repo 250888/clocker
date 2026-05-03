@@ -48,6 +48,18 @@ class DurationFormatter {
     }
   }
 
+  static String formatHours(double hours) {
+    if (hours.abs() < 1) {
+      final minutes = (hours * 60).round();
+      return '$minutes分钟';
+    } else if (hours.abs() < 24) {
+      return '${hours.toStringAsFixed(1)}小时';
+    } else {
+      final days = (hours / 24).toStringAsFixed(1);
+      return '$days天';
+    }
+  }
+
   static String formatFlowRate(double rate) {
     return '${rate.toStringAsFixed(2)}x';
   }

@@ -4,7 +4,6 @@ import '../core/utils/database_factory.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<Task> _tasks = [];
-  String? _spacetimeId;
   final DatabaseHelperInterface _db = DatabaseFactory.create();
 
   List<Task> get tasks => _tasks;
@@ -20,7 +19,6 @@ class TaskProvider extends ChangeNotifier {
       completedTasks.fold(0.0, (sum, t) => sum + t.effectiveVValue);
 
   Future<void> loadTasks(String spacetimeId) async {
-    _spacetimeId = spacetimeId;
     _tasks = await _db.getTasksForSpacetime(spacetimeId);
     notifyListeners();
   }

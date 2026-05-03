@@ -31,6 +31,11 @@ class FocusProvider extends ChangeNotifier {
   bool _enableCamera = true;
   String _selectedNoise = 'rain';
 
+  Duration _continuousAccrued = Duration.zero;
+  DateTime? _forceBreakUntil;
+  static const Duration _maxContinuousFocus = Duration(hours: 4);
+  static const Duration _forceBreakDuration = Duration(minutes: 30);
+
   FocusSession? get currentSession => _currentSession;
   Duration get elapsed => _elapsed;
   Duration get targetDuration => _targetDuration;
@@ -60,6 +65,19 @@ class FocusProvider extends ChangeNotifier {
   String get selectedNoise => _selectedNoise;
   double get volume => _audioService.volume;
   bool get isCameraActive => _cameraService.isActive;
+
+  Duration get continuousAccrued => _continuousAccrued;
+  DateTime? get forceBreakUntil => _forceBreakUntil;
+  bool get isInForceBreak {
+    if (_forceBreakUntil == null) return false;
+    return DateTime.now().isBefore(_forceBreakUntil!);
+  }
+
+  Duration get remainingForceBreak {
+    if (!isInForceBreak) return Duration.zero;
+    final remaining = _forceBreakUntil!.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
 
   void setMode(FocusMode mode) {
     _selectedMode = mode;
@@ -91,6 +109,8 @@ class FocusProvider extends ChangeNotifier {
   }
 
   void startFocus(String spacetimeId) {
+    if (isInForceBreak) return;
+
     _currentSession = FocusSession(
       spacetimeId: spacetimeId,
       mode: _selectedMode,
@@ -106,6 +126,11 @@ class FocusProvider extends ChangeNotifier {
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
+
+      if (_elapsed.inSeconds % 30 == 0 && _enableWhiteNoise) {
+        _audioService.adjustToFlowRate(_effectiveFlowRateGetter?.call() ?? 2.0);
+      }
+
       notifyListeners();
 
       if (_elapsed >= _targetDuration) {
@@ -114,6 +139,12 @@ class FocusProvider extends ChangeNotifier {
     });
 
     notifyListeners();
+  }
+
+  double Function()? _effectiveFlowRateGetter;
+
+  void setFlowRateGetter(double Function() getter) {
+    _effectiveFlowRateGetter = getter;
   }
 
   Future<void> _startServices() async {
@@ -234,6 +265,12 @@ class FocusProvider extends ChangeNotifier {
         );
         await _db.insertFocusSession(completed);
         _currentSession = completed;
+
+        _continuousAccrued += _elapsed;
+        if (_continuousAccrued >= _maxContinuousFocus) {
+          _forceBreakUntil = DateTime.now().add(_forceBreakDuration);
+          _continuousAccrued = Duration.zero;
+        }
 
         try {
           await _audioService.playCompletionSound();
