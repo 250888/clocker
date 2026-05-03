@@ -179,8 +179,11 @@ class FocusProvider extends ChangeNotifier {
 
       if (_enableCamera) {
         try {
-          await _cameraService.startCamera();
-          notifyListeners();
+          Future.delayed(const Duration(milliseconds: 500), () async {
+            if (!_isRunning) return;
+            await _cameraService.startCamera();
+            notifyListeners();
+          });
         } catch (e) {
           debugPrint('Camera error: $e');
         }

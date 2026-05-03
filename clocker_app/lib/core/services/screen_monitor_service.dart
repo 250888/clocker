@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class ScreenMonitorService {
-  static final ScreenMonitorService _instance = ScreenMonitorService._internal();
+  static final ScreenMonitorService _instance =
+      ScreenMonitorService._internal();
   factory ScreenMonitorService() => _instance;
   ScreenMonitorService._internal();
 
@@ -18,31 +19,126 @@ class ScreenMonitorService {
   final Map<String, Duration> _appTimeMap = {};
   final List<AppSwitchEvent> _switchHistory = [];
 
+  List<String> _customProductiveApps = [];
+
   final List<String> _productiveApps = [
-    'clocker', 'code', 'vscode', 'visual studio code', 'android studio',
-    'intellij', 'idea', 'pycharm', 'webstorm', 'clion', 'rider',
-    'chrome', 'edge', 'firefox', 'safari', 'msedge',
-    'word', 'excel', 'powerpoint', 'onenote', 'outlook',
-    'notion', 'obsidian', 'typora', 'marktext',
-    'terminal', 'windowsterminal', 'powershell', 'cmd', 'gitbash',
-    'flutter', 'dart', 'visualstudio', 'devenv',
-    'github', 'git', 'sourcetree', 'fork',
-    'figma', 'sketch', 'xd', 'blender',
-    'sublime', 'atom', 'vim', 'nvim', 'emacs',
-    'datagrip', 'dbeaver', 'navicat', 'robo3t',
-    'postman', 'insomnia',
+    'clocker',
+    'code',
+    'vscode',
+    'visual studio code',
+    'android studio',
+    'intellij',
+    'idea',
+    'pycharm',
+    'webstorm',
+    'clion',
+    'rider',
+    'chrome',
+    'edge',
+    'firefox',
+    'safari',
+    'msedge',
+    'word',
+    'excel',
+    'powerpoint',
+    'onenote',
+    'outlook',
+    'notion',
+    'obsidian',
+    'typora',
+    'marktext',
+    'terminal',
+    'windowsterminal',
+    'powershell',
+    'cmd',
+    'gitbash',
+    'flutter',
+    'dart',
+    'visualstudio',
+    'devenv',
+    'github',
+    'git',
+    'sourcetree',
+    'fork',
+    'figma',
+    'sketch',
+    'xd',
+    'blender',
+    'sublime',
+    'atom',
+    'vim',
+    'nvim',
+    'emacs',
+    'datagrip',
+    'dbeaver',
+    'navicat',
+    'robo3t',
+    'postman',
+    'insomnia',
   ];
 
+  List<String> get allProductiveApps => [
+    ..._productiveApps,
+    ..._customProductiveApps,
+  ];
+
+  void addCustomProductiveApp(String appName) {
+    final lower = appName.toLowerCase().trim();
+    if (lower.isNotEmpty && !_customProductiveApps.contains(lower)) {
+      _customProductiveApps.add(lower);
+    }
+  }
+
+  void removeCustomProductiveApp(String appName) {
+    _customProductiveApps.remove(appName.toLowerCase().trim());
+  }
+
+  void clearCustomProductiveApps() {
+    _customProductiveApps.clear();
+  }
+
   final List<String> _unproductiveApps = [
-    'youtube', 'tiktok', 'instagram', 'twitter', 'x', 'facebook',
-    'wechat', 'weixin', 'qq', 'tim', 'bilibili', 'netflix',
-    'game', 'steam', 'epic', 'origin', 'ubisoft',
-    'discord', 'telegram', 'whatsapp', 'signal',
-    'reddit', 'twitch', 'hulu', 'disney',
-    'douyin', 'kuaishou', 'zhihu', 'weibo',
-    'spotify', 'applemusic', 'neteasecloudmusic',
-    'lol', 'csgo', 'valorant', 'minecraft', 'genshin',
-    'mhw', 'monsterhunter', 'overwatch', 'dota',
+    'youtube',
+    'tiktok',
+    'instagram',
+    'twitter',
+    'x',
+    'facebook',
+    'wechat',
+    'weixin',
+    'qq',
+    'tim',
+    'bilibili',
+    'netflix',
+    'game',
+    'steam',
+    'epic',
+    'origin',
+    'ubisoft',
+    'discord',
+    'telegram',
+    'whatsapp',
+    'signal',
+    'reddit',
+    'twitch',
+    'hulu',
+    'disney',
+    'douyin',
+    'kuaishou',
+    'zhihu',
+    'weibo',
+    'spotify',
+    'applemusic',
+    'neteasecloudmusic',
+    'lol',
+    'csgo',
+    'valorant',
+    'minecraft',
+    'genshin',
+    'mhw',
+    'monsterhunter',
+    'overwatch',
+    'dota',
   ];
 
   bool get isMonitoring => _isMonitoring;
@@ -52,6 +148,8 @@ class ScreenMonitorService {
   int get appSwitchCount => _appSwitchCount;
   bool get isPageVisible => _isPageVisible;
   Map<String, Duration> get appTimeMap => Map.unmodifiable(_appTimeMap);
+  List<String> get customProductiveApps =>
+      List.unmodifiable(_customProductiveApps);
   List<AppSwitchEvent> get switchHistory => List.unmodifiable(_switchHistory);
 
   double get productivityRatio {
@@ -62,10 +160,13 @@ class ScreenMonitorService {
 
   AppCategory categorizeApp(String appName) {
     final lower = appName.toLowerCase().trim();
+    if (lower.contains('clocker') || lower == 'clocker') {
+      return AppCategory.productive;
+    }
     if (_unproductiveApps.any((p) => lower.contains(p))) {
       return AppCategory.entertainment;
     }
-    if (_productiveApps.any((p) => lower.contains(p))) {
+    if (allProductiveApps.any((p) => lower.contains(p))) {
       return AppCategory.productive;
     }
     return AppCategory.neutral;
@@ -103,7 +204,8 @@ class ScreenMonitorService {
       final elapsed = now.difference(_lastActivity!);
       final category = categorizeApp(_currentApp);
 
-      _appTimeMap[_currentApp] = (_appTimeMap[_currentApp] ?? Duration.zero) + elapsed;
+      _appTimeMap[_currentApp] =
+          (_appTimeMap[_currentApp] ?? Duration.zero) + elapsed;
 
       if (_isPageVisible) {
         switch (category) {
@@ -142,13 +244,17 @@ class ScreenMonitorService {
     if (_currentApp != appName) {
       _checkActivity();
       _appSwitchCount++;
-      _switchHistory.add(AppSwitchEvent(
-        fromApp: _currentApp,
-        toApp: appName,
-        timestamp: DateTime.now(),
-        category: categorizeApp(appName),
-      ));
-      debugPrint('App switched: $_currentApp -> $appName (${categorizeApp(appName).name})');
+      _switchHistory.add(
+        AppSwitchEvent(
+          fromApp: _currentApp,
+          toApp: appName,
+          timestamp: DateTime.now(),
+          category: categorizeApp(appName),
+        ),
+      );
+      debugPrint(
+        'App switched: $_currentApp -> $appName (${categorizeApp(appName).name})',
+      );
     }
     _currentApp = appName;
   }

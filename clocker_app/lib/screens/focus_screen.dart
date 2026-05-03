@@ -17,7 +17,6 @@ class FocusScreen extends StatefulWidget {
 class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   FocusMode _selectedMode = FocusMode.deepFocus;
   Duration _targetDuration = const Duration(minutes: 25);
-  double _cameraOpacity = 1.0;
 
   final List<Map<String, dynamic>> _durations = [
     {'label': '15分钟', 'duration': const Duration(minutes: 15)},
@@ -333,6 +332,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMonitorToggles(FocusProvider focusProvider) {
+    final customApps = focusProvider.screenMonitor.customProductiveApps;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -347,7 +347,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
           SwitchListTile(
             title: const Text('屏幕监控', style: TextStyle(fontSize: 14)),
             subtitle: Text(
-              '区分生产性/娱乐应用',
+              '区分生产性/娱乐应用（Clocker自动计入生产）',
               style: TextStyle(fontSize: 11, color: AppColors.textHint),
             ),
             value: focusProvider.enableScreenMonitoring,
@@ -355,6 +355,63 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
                 focusProvider.configure(enableScreenMonitoring: v),
             dense: true,
           ),
+          if (focusProvider.enableScreenMonitoring &&
+              customApps.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 80),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: customApps.map((app) {
+                  return Chip(
+                    label: Text(app, style: const TextStyle(fontSize: 11)),
+                    backgroundColor: AppColors.success.withValues(alpha: 0.15),
+                    deleteIconColor: AppColors.danger,
+                    onDeleted: () {
+                      setState(() {
+                        focusProvider.screenMonitor.removeCustomProductiveApp(
+                          app,
+                        );
+                      });
+                    },
+                    labelStyle: TextStyle(
+                      color: AppColors.success,
+                      fontSize: 11,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+          if (focusProvider.enableScreenMonitoring) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _showAddLearningAppDialog(focusProvider),
+                icon: Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
+                label: Text(
+                  '添加学习APP',
+                  style: TextStyle(fontSize: 11, color: AppColors.accent),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
           SwitchListTile(
             title: const Text('注意力监控', style: TextStyle(fontSize: 14)),
             subtitle: Text(
@@ -375,6 +432,76 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
             value: focusProvider.enableCamera,
             onChanged: (v) => focusProvider.configure(enableCamera: v),
             dense: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddLearningAppDialog(FocusProvider focusProvider) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            Icon(Icons.school, color: AppColors.accent, size: 20),
+            const SizedBox(width: 8),
+            const Text('添加学习APP'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: '输入APP名称（如：Anki、百词斩、Khan Academy）',
+                hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.accent),
+                ),
+              ),
+              style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              onSubmitted: (value) {
+                if (value.trim().isNotEmpty) {
+                  focusProvider.screenMonitor.addCustomProductiveApp(
+                    value.trim(),
+                  );
+                  setState(() {});
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '添加后该APP使用时间将计入生产性时间',
+              style: TextStyle(color: AppColors.textHint, fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                focusProvider.screenMonitor.addCustomProductiveApp(
+                  controller.text.trim(),
+                );
+                setState(() {});
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('添加'),
           ),
         ],
       ),
@@ -614,28 +741,6 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
                   ),
             ),
           ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: _cameraOpacity,
-                  min: 0.3,
-                  max: 1.0,
-                  divisions: 7,
-                  onChanged: (v) {
-                    setState(() => _cameraOpacity = v);
-                    focusProvider.cameraService.setOpacity(v);
-                  },
-                  activeColor: AppColors.primary,
-                ),
-              ),
-              Text(
-                '透明度',
-                style: TextStyle(color: AppColors.textHint, fontSize: 10),
-              ),
-            ],
-          ),
         ],
       ),
     );
