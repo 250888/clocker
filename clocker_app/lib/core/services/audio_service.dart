@@ -40,7 +40,7 @@ class AudioService {
     {'id': 'cafe', 'name': '咖啡馆', 'icon': Icons.coffee, 'color': Colors.brown},
   ];
 
-  static const int _sampleRate = 22050;
+  static const int _sampleRate = 44100;
 
   Future<void> ensureInitialized() async {
     if (_initialized) return;
@@ -67,8 +67,46 @@ class AudioService {
     return Uint8List.fromList([...header.buffer.asUint8List(), ...pcmData]);
   }
 
-  double _lowPass(double input, double prev, double alpha) {
-    return prev + alpha * (input - prev);
+  List<double> _biquadCoeffs(String type, double freq, double Q) {
+    final w0 = 2 * pi * freq / _sampleRate;
+    final alpha = sin(w0) / (2 * Q);
+    double b0, b1, b2, a0, a1, a2;
+
+    switch (type) {
+      case 'lowpass':
+        b0 = (1 - cos(w0)) / 2;
+        b1 = 1 - cos(w0);
+        b2 = (1 - cos(w0)) / 2;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      case 'highpass':
+        b0 = (1 + cos(w0)) / 2;
+        b1 = -(1 + cos(w0));
+        b2 = (1 + cos(w0)) / 2;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      case 'bandpass':
+        b0 = alpha;
+        b1 = 0;
+        b2 = -alpha;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      default:
+        b0 = 1;
+        b1 = 0;
+        b2 = 0;
+        a0 = 1;
+        a1 = 0;
+        a2 = 0;
+    }
+
+    return [b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0];
   }
 
   Uint8List _generateNoisePcm(
@@ -77,225 +115,189 @@ class AudioService {
     int durationSeconds,
   ) {
     final totalSamples = _sampleRate * durationSeconds;
-    final pcm = Int16List(totalSamples);
+    final pcm = Float64List(totalSamples);
     final random = Random();
 
-    double prevSample = 0;
-    double prevSample2 = 0;
-    double prevSample3 = 0;
+    final noise = List.generate(
+      totalSamples,
+      (_) => random.nextDouble() * 2 - 1,
+    );
+
+    double x1a = 0, x2a = 0, y1a = 0, y2a = 0;
+    double x1b = 0, x2b = 0, y1b = 0, y2b = 0;
     double lfoPhase = 0;
-    double envelope = 1.0;
 
     for (int i = 0; i < totalSamples; i++) {
+      final x0 = noise[i];
       double sample = 0;
-      final t = i / _sampleRate;
-      final rawNoise = (random.nextDouble() * 2 - 1);
 
       switch (soundId) {
         case 'rain':
-          // 雨声: 随机噪声 + 偶尔放大模拟雨滴
-          double rainNoise = rawNoise * 0.3;
-          // 低通滤波让雨声更柔和
-          rainNoise = _lowPass(rainNoise, prevSample, 0.15);
-          // 随机雨滴 - 偶尔的高频脉冲
-          if (random.nextDouble() > 0.995) {
-            rainNoise += (random.nextDouble() * 2 - 1) * 0.6;
+          {
+            final c = _biquadCoeffs('bandpass', 2500, 0.5);
+            final y0 =
+                c[0] * x0 + c[1] * x1a + c[2] * x2a - c[3] * y1a - c[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = y0;
+            sample = y0;
           }
-          // 持续的细雨背景
-          rainNoise += (random.nextDouble() * 2 - 1) * 0.05;
-          sample = rainNoise;
-          prevSample = rainNoise;
           break;
 
         case 'fire':
-          // 炉火: 低频随机噪声 + 爆裂声
-          double fireNoise = rawNoise * 0.1;
-          // 强低通滤波 - 炉火的隆隆声
-          fireNoise = _lowPass(fireNoise, prevSample, 0.05);
-          // 爆裂声 - 随机高频脉冲
-          if (random.nextDouble() > 0.99) {
-            final crackleIntensity = random.nextDouble() * 0.8 + 0.2;
-            final crackleFreq = 800 + random.nextDouble() * 2000;
-            final crackleLen = (_sampleRate * 0.05).toInt();
-            for (int j = 0; j < crackleLen && (i + j) < totalSamples; j++) {
-              final ct = j / _sampleRate;
-              final decay = 1.0 - j / crackleLen;
-              final crackle =
-                  sin(2 * pi * crackleFreq * ct) *
-                  crackleIntensity *
-                  decay *
-                  0.4;
-              final idx = i + j;
-              if (idx < totalSamples) {
-                pcm[idx] = (pcm[idx] + (crackle * volume * 32767).toInt())
-                    .clamp(-32768, 32767)
-                    .toInt();
-              }
-            }
+          {
+            final c1 = _biquadCoeffs('lowpass', 600, 1.0);
+            final s1 =
+                c1[0] * x0 +
+                c1[1] * x1a +
+                c1[2] * x2a -
+                c1[3] * y1a -
+                c1[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = s1;
+
+            final c2 = _biquadCoeffs('highpass', 80, 0.7071);
+            final s2 =
+                c2[0] * s1 +
+                c2[1] * x1b +
+                c2[2] * x2b -
+                c2[3] * y1b -
+                c2[4] * y2b;
+            x2b = x1b;
+            x1b = s1;
+            y2b = y1b;
+            y1b = s2;
+            sample = s2;
           }
-          // 低频隆隆声
-          fireNoise += sin(2 * pi * 60 * t) * 0.05;
-          sample = fireNoise;
-          prevSample = fireNoise;
           break;
 
         case 'ocean':
-          // 海浪: 正弦波 + 噪声模拟潮汐
-          lfoPhase += 0.08 / _sampleRate * 2 * pi;
-          final tideMod = (sin(lfoPhase) + 1) * 0.5; // 0-1 潮汐周期
-          // 波浪噪声
-          double waveNoise = rawNoise * 0.12 * tideMod;
-          waveNoise = _lowPass(waveNoise, prevSample, 0.1);
-          // 主波浪声 - 多个正弦波叠加
-          final wave1 = sin(2 * pi * 0.15 * t) * 0.15;
-          final wave2 = sin(2 * pi * 0.08 * t + 1.5) * 0.1;
-          final wave3 = sin(2 * pi * 0.25 * t + 0.7) * 0.05;
-          // 泡沫声 - 高频噪声在波浪峰值时出现
-          double foam = 0;
-          if (tideMod > 0.7) {
-            foam = (random.nextDouble() * 2 - 1) * 0.08 * (tideMod - 0.7) / 0.3;
+          {
+            lfoPhase += 0.12 / _sampleRate * 2 * pi;
+            final modFreq = 800 + sin(lfoPhase) * 400;
+            final c = _biquadCoeffs('lowpass', modFreq, 0.8);
+            final y0 =
+                c[0] * x0 + c[1] * x1a + c[2] * x2a - c[3] * y1a - c[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = y0;
+            sample = y0;
           }
-          sample = waveNoise + wave1 + wave2 + wave3 + foam;
-          prevSample = waveNoise;
           break;
 
         case 'wind':
-          // 微风: 滤波噪声模拟风声
-          double windNoise = rawNoise * 0.15;
-          // 多级低通滤波模拟风声特征
-          windNoise = _lowPass(windNoise, prevSample, 0.08);
-          windNoise = _lowPass(windNoise, prevSample2, 0.12);
-          // 风的阵风效果 - LFO调制
-          lfoPhase += 0.15 / _sampleRate * 2 * pi;
-          final gustMod = (sin(lfoPhase) + 1) * 0.5;
-          windNoise *= 0.3 + gustMod * 0.7;
-          // 呼啸声 - 高频分量
-          final whistle =
-              sin(2 * pi * (400 + gustMod * 200) * t) * 0.02 * gustMod;
-          sample = windNoise + whistle;
-          prevSample2 = prevSample;
-          prevSample = windNoise;
+          {
+            lfoPhase += 0.08 / _sampleRate * 2 * pi;
+            final modFreq = 400 + sin(lfoPhase) * 300;
+            final c1 = _biquadCoeffs('bandpass', modFreq, 0.3);
+            final s1 =
+                c1[0] * x0 +
+                c1[1] * x1a +
+                c1[2] * x2a -
+                c1[3] * y1a -
+                c1[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = s1;
+
+            final c2 = _biquadCoeffs('lowpass', 1200, 0.7071);
+            final s2 =
+                c2[0] * s1 +
+                c2[1] * x1b +
+                c2[2] * x2b -
+                c2[3] * y1b -
+                c2[4] * y2b;
+            x2b = x1b;
+            x1b = s1;
+            y2b = y1b;
+            y1b = s2;
+            sample = s2;
+          }
           break;
 
         case 'forest':
-          // 森林: 安静底噪 + 偶尔鸟鸣声
-          double forestNoise = rawNoise * 0.02;
-          forestNoise = _lowPass(forestNoise, prevSample, 0.05);
-          // 虫鸣背景 - 高频持续声
-          forestNoise +=
-              sin(2 * pi * 4500 * t) *
-              0.008 *
-              (sin(2 * pi * 8 * t) * 0.5 + 0.5);
-          forestNoise +=
-              sin(2 * pi * 5200 * t) *
-              0.005 *
-              (sin(2 * pi * 11 * t) * 0.5 + 0.5);
-          // 鸟鸣声 - 随机出现的啁啾声
-          if (random.nextDouble() > 0.998) {
-            final birdFreq = 2500 + random.nextDouble() * 2500;
-            final chirpLen = (_sampleRate * (0.08 + random.nextDouble() * 0.15))
-                .toInt();
-            final chirpType = random.nextInt(3);
-            for (int j = 0; j < chirpLen && (i + j) < totalSamples; j++) {
-              final ct = j / _sampleRate;
-              final decay = 1.0 - j / chirpLen;
-              double chirp;
-              if (chirpType == 0) {
-                // 上升啁啾
-                final freq = birdFreq + (birdFreq * 0.5) * j / chirpLen;
-                chirp = sin(2 * pi * freq * ct) * 0.25 * decay;
-              } else if (chirpType == 1) {
-                // 双音啁啾
-                final freq1 = birdFreq;
-                final freq2 = birdFreq * 1.2;
-                chirp =
-                    (sin(2 * pi * freq1 * ct) + sin(2 * pi * freq2 * ct)) *
-                    0.12 *
-                    decay;
-              } else {
-                // 颤音
-                final freq = birdFreq + sin(2 * pi * 30 * ct) * 200;
-                chirp = sin(2 * pi * freq * ct) * 0.2 * decay;
-              }
-              final idx = i + j;
-              if (idx < totalSamples) {
-                pcm[idx] = (pcm[idx] + (chirp * volume * 32767).toInt())
-                    .clamp(-32768, 32767)
-                    .toInt();
-              }
-            }
+          {
+            final c1 = _biquadCoeffs('bandpass', 6000, 2.0);
+            final s1 =
+                c1[0] * x0 +
+                c1[1] * x1a +
+                c1[2] * x2a -
+                c1[3] * y1a -
+                c1[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = s1;
+
+            final c2 = _biquadCoeffs('lowpass', 8000, 0.7071);
+            final s2 =
+                c2[0] * s1 +
+                c2[1] * x1b +
+                c2[2] * x2b -
+                c2[3] * y1b -
+                c2[4] * y2b;
+            x2b = x1b;
+            x1b = s1;
+            y2b = y1b;
+            y1b = s2;
+            sample = s2;
           }
-          // 树叶沙沙声
-          if (random.nextDouble() > 0.97) {
-            forestNoise += (random.nextDouble() * 2 - 1) * 0.03;
-          }
-          sample = forestNoise;
-          prevSample = forestNoise;
           break;
 
         case 'cafe':
-          // 咖啡馆: 中等噪声 + 人声模拟
-          double cafeNoise = rawNoise * 0.08;
-          cafeNoise = _lowPass(cafeNoise, prevSample, 0.2);
-          // 人声模拟 - 多个低频共振峰
-          if (random.nextDouble() > 0.985) {
-            envelope = 0.5 + random.nextDouble() * 0.5;
+          {
+            final c1 = _biquadCoeffs('bandpass', 1500, 0.6);
+            final s1 =
+                c1[0] * x0 +
+                c1[1] * x1a +
+                c1[2] * x2a -
+                c1[3] * y1a -
+                c1[4] * y2a;
+            x2a = x1a;
+            x1a = x0;
+            y2a = y1a;
+            y1a = s1;
+
+            final c2 = _biquadCoeffs('lowpass', 3000, 0.7071);
+            final s2 =
+                c2[0] * s1 +
+                c2[1] * x1b +
+                c2[2] * x2b -
+                c2[3] * y1b -
+                c2[4] * y2b;
+            x2b = x1b;
+            x1b = s1;
+            y2b = y1b;
+            y1b = s2;
+            sample = s2;
           }
-          envelope *= 0.98;
-          final voice1 = sin(2 * pi * 200 * t) * 0.03 * envelope;
-          final voice2 = sin(2 * pi * 500 * t) * 0.02 * envelope;
-          final voice3 = sin(2 * pi * 800 * t) * 0.01 * envelope;
-          // 杯碟声
-          double clink = 0;
-          if (random.nextDouble() > 0.997) {
-            clink = sin(2 * pi * 3000 * t) * 0.15;
-            final clinkLen = (_sampleRate * 0.03).toInt();
-            for (int j = 0; j < clinkLen && (i + j) < totalSamples; j++) {
-              final decay = 1.0 - j / clinkLen;
-              final idx = i + j;
-              if (idx < totalSamples) {
-                pcm[idx] =
-                    (pcm[idx] +
-                            (sin(2 * pi * 3000 * j / _sampleRate) *
-                                    0.15 *
-                                    decay *
-                                    volume *
-                                    32767)
-                                .toInt())
-                        .clamp(-32768, 32767)
-                        .toInt();
-              }
-            }
-          }
-          // 背景音乐感 - 微弱的和弦
-          final bgMusic =
-              sin(2 * pi * 261 * t) * 0.005 + sin(2 * pi * 329 * t) * 0.004;
-          sample = cafeNoise + voice1 + voice2 + voice3 + bgMusic;
-          prevSample = cafeNoise;
           break;
 
         default:
-          sample = rawNoise * 0.1;
+          sample = x0 * 0.1;
       }
 
       sample *= volume;
-      final int16Sample = (sample * 32767).toInt().clamp(-32768, 32767);
-      pcm[i] = pcm[i] + int16Sample;
+      pcm[i] = sample;
     }
 
-    // 归一化防止削波
-    int maxVal = 1;
+    double maxVal = 0.001;
     for (int i = 0; i < totalSamples; i++) {
       final abs = pcm[i].abs();
       if (abs > maxVal) maxVal = abs;
     }
-    final normFactor = maxVal > 30000 ? 30000.0 / maxVal : 1.0;
+    final normFactor = maxVal > 0.9 ? 0.9 / maxVal : 1.0;
 
     final result = ByteData(totalSamples * 2);
     for (int i = 0; i < totalSamples; i++) {
       result.setInt16(
         i * 2,
-        (pcm[i] * normFactor).toInt().clamp(-32768, 32767),
+        (pcm[i] * normFactor * 32767).toInt().clamp(-32768, 32767),
         Endian.little,
       );
     }
@@ -410,10 +412,8 @@ class AudioService {
     }
   }
 
-  // 完成音: C-E-G 大三和弦
   Future<void> playCompletionSound() async {
     try {
-      // C5=523, E5=659, G5=784 大三和弦
       final chord = _generateChordPcm([523.25, 659.25, 783.99], 600, vol: 0.25);
       final wav = _generateWav(chord, _sampleRate, 1);
       await _sfxPlayer?.play(BytesSource(wav));
@@ -423,7 +423,6 @@ class AudioService {
     }
   }
 
-  // 分心警告: 低频 200Hz
   Future<void> playDistractionSound() async {
     try {
       final pcm = _generateTonePcm(
@@ -441,7 +440,6 @@ class AudioService {
     }
   }
 
-  // 成就音: 高音频段上升
   Future<void> playAchievementSound() async {
     try {
       final a = _generateTonePcm(880, 100, vol: 0.2);
@@ -457,7 +455,6 @@ class AudioService {
     }
   }
 
-  // 滴答声: 1kHz 短音
   Future<void> playTickSound() async {
     try {
       final pcm = _generateTonePcm(
