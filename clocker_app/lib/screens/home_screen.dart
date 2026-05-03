@@ -441,15 +441,19 @@ class HomeScreen extends StatelessWidget {
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () {
-              settings.clearAllData();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('所有数据已清除'),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
+            onPressed: () async {
+              await settings.clearAllData();
+              if (context.mounted) {
+                context.read<SpacetimeProvider>().loadSpacetimes();
+                context.read<AchievementProvider>().loadAchievements();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('所有数据已清除'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              }
             },
             child: const Text(
               '确认清除',
