@@ -4,7 +4,6 @@ import 'home_screen.dart';
 import 'focus_screen.dart';
 import 'task_screen.dart';
 import 'report_screen.dart';
-import 'settings_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -21,7 +20,6 @@ class _AppShellState extends State<AppShell> {
     FocusScreen(),
     TaskScreen(),
     ReportScreen(),
-    SettingsScreen(),
   ];
 
   @override
@@ -50,6 +48,7 @@ class _AppShellState extends State<AppShell> {
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.dashboard_outlined),
@@ -70,11 +69,6 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.bar_chart_outlined),
                   activeIcon: Icon(Icons.bar_chart),
                   label: '报告',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_outlined),
-                  activeIcon: Icon(Icons.settings),
-                  label: '规则',
                 ),
               ],
             ),

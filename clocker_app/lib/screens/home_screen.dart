@@ -6,6 +6,7 @@ import '../models/spacetime.dart';
 import '../providers/spacetime_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/achievement_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/flow_rate_gauge.dart';
 import '../widgets/countdown_display.dart';
 import '../widgets/task_card.dart';
@@ -157,6 +158,10 @@ class HomeScreen extends StatelessWidget {
                   _buildMiniTasks(context),
                   const SizedBox(height: 16),
                   _buildRecentAchievements(context),
+                  const SizedBox(height: 16),
+                  _buildPrivacySection(context),
+                  const SizedBox(height: 12),
+                  _buildDangerZone(context),
                 ],
               ),
             ),
@@ -337,6 +342,119 @@ class HomeScreen extends StatelessWidget {
               Navigator.pop(context);
             },
             child: const Text('删除', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacySection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.security, color: AppColors.info, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                AppStrings.privacyTitle,
+                style: TextStyle(
+                  color: AppColors.info,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.privacyContent,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDangerZone(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, _) {
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '危险区域',
+                style: TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmClearData(context, settings),
+                  icon: const Icon(Icons.delete_forever, size: 16),
+                  label: const Text('清除所有数据'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmClearData(BuildContext context, SettingsProvider settings) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('确认清除数据'),
+        content: const Text('此操作将删除所有时空、任务、专注记录和成就数据，且无法恢复。确定要继续吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              settings.clearAllData();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('所有数据已清除'),
+                  backgroundColor: AppColors.danger,
+                ),
+              );
+            },
+            child: const Text(
+              '确认清除',
+              style: TextStyle(color: AppColors.danger),
+            ),
           ),
         ],
       ),
