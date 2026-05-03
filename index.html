@@ -117,9 +117,14 @@
         v.muted=true;
         v.playsInline=true;
         v.setAttribute('playsinline','');
-        await v.play();
+        v.setAttribute('autoplay','');
         c.style.display='block';
         c.style.zIndex='2147483647';
+        try{await v.play();}catch(pe){
+          console.warn('play() failed, retrying:',pe);
+          v.play().catch(function(){});
+        }
+        console.log('Camera started, video readyState:',v.readyState);
         return true;
       }catch(e){console.warn('Camera:',e);return false;}
     };
