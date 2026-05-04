@@ -148,49 +148,48 @@ class FocusProvider extends ChangeNotifier {
   }
 
   Future<void> _startServices() async {
-    try {
-      if (_enableWhiteNoise) {
-        try {
-          await _audioService.ensureInitialized();
-          await _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
-        } catch (e) {
-          debugPrint('White noise error: $e');
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      try {
+        if (_enableWhiteNoise) {
+          try {
+            await _audioService.ensureInitialized();
+            await _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
+          } catch (e) {
+            debugPrint('White noise error: $e');
+          }
         }
-      }
 
-      if (_enableScreenMonitoring) {
-        try {
-          _screenMonitor.startMonitoring();
-          _nativeMonitor = ScreenMonitorFactory.create();
-          _nativeMonitor!.startNativeMonitoring();
-        } catch (e) {
-          debugPrint('Screen monitor error: $e');
+        if (_enableScreenMonitoring) {
+          try {
+            _screenMonitor.startMonitoring();
+            _nativeMonitor = ScreenMonitorFactory.create();
+            _nativeMonitor!.startNativeMonitoring();
+          } catch (e) {
+            debugPrint('Screen monitor error: $e');
+          }
         }
-      }
 
-      if (_enableAttentionMonitoring) {
-        try {
-          _attentionMonitor.initialize();
-          _attentionMonitor.startMonitoring();
-        } catch (e) {
-          debugPrint('Attention monitor error: $e');
+        if (_enableAttentionMonitoring) {
+          try {
+            _attentionMonitor.initialize();
+            _attentionMonitor.startMonitoring();
+          } catch (e) {
+            debugPrint('Attention monitor error: $e');
+          }
         }
-      }
 
-      if (_enableCamera) {
-        try {
-          Future.delayed(const Duration(milliseconds: 500), () async {
-            if (!_isRunning) return;
+        if (_enableCamera) {
+          try {
             await _cameraService.startCamera();
-            notifyListeners();
-          });
-        } catch (e) {
-          debugPrint('Camera error: $e');
+            if (_isRunning) notifyListeners();
+          } catch (e) {
+            debugPrint('Camera error: $e');
+          }
         }
+      } catch (e) {
+        debugPrint('Service startup error: $e');
       }
-    } catch (e) {
-      debugPrint('Service startup error: $e');
-    }
+    });
   }
 
   void _stopServices() {
