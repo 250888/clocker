@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:html' as html;
 import 'package:flutter/widgets.dart';
 import 'web_camera_service.dart';
@@ -8,7 +7,6 @@ WebCameraService createWebCameraService() => WebCameraServiceImpl();
 class WebCameraServiceImpl implements WebCameraService {
   bool _isActive = false;
   bool _isAvailable = true;
-  html.MediaStream? _stream;
 
   @override
   bool get isActive => _isActive;
@@ -16,57 +14,17 @@ class WebCameraServiceImpl implements WebCameraService {
   @override
   bool get isAvailable => _isAvailable;
 
-  html.VideoElement? get _video =>
-      html.querySelector('#camera-video') as html.VideoElement?;
-  html.DivElement? get _container =>
-      html.querySelector('#camera-container') as html.DivElement?;
-
   @override
   Future<bool> startCamera() async {
     try {
-      final video = _video;
-      final container = _container;
-      if (video == null || container == null) {
-        debugPrint('Web camera: DOM elements not found');
-        _isAvailable = false;
-        return false;
+      final result = await (html.window as dynamic).startCamera();
+      _isActive = result == true;
+      if (_isActive) {
+        debugPrint('Web camera started');
       }
-
-      final md = html.window.navigator.mediaDevices;
-      if (md == null) {
-        debugPrint('Web camera: mediaDevices not available');
-        _isAvailable = false;
-        return false;
-      }
-
-      _stream = await md.getUserMedia({
-        'video': {
-          'facingMode': 'user',
-          'width': {'ideal': 320},
-          'height': {'ideal': 240},
-        },
-        'audio': false,
-      });
-
-      video.srcObject = _stream;
-      video.muted = true;
-      video.setAttribute('playsinline', '');
-      video.setAttribute('autoplay', '');
-      try {
-        await video.play();
-      } catch (_) {
-        video.play();
-      }
-
-      container.style.display = 'block';
-      container.style.zIndex = '2147483647';
-      _isActive = true;
-      setMirror(true);
-      debugPrint('Web camera started');
-      return true;
+      return _isActive;
     } catch (e) {
       _isAvailable = false;
-      _isActive = false;
       debugPrint('Web camera start failed: $e');
       return false;
     }
@@ -75,16 +33,7 @@ class WebCameraServiceImpl implements WebCameraService {
   @override
   void stopCamera() {
     try {
-      _stream?.getTracks().forEach((t) => t.stop());
-      _stream = null;
-      final container = _container;
-      if (container != null) {
-        container.style.display = 'none';
-      }
-      final video = _video;
-      if (video != null) {
-        video.srcObject = null;
-      }
+      (html.window as dynamic).stopCamera();
       _isActive = false;
       debugPrint('Web camera stopped');
     } catch (e) {
@@ -94,17 +43,19 @@ class WebCameraServiceImpl implements WebCameraService {
 
   @override
   void setOpacity(double opacity) {
-    final container = _container;
-    if (container != null) {
-      container.style.opacity = '$opacity';
+    try {
+      (html.window as dynamic).setCameraOpacity(opacity);
+    } catch (e) {
+      debugPrint('Camera opacity error: $e');
     }
   }
 
   @override
   void setMirror(bool mirror) {
-    final video = _video;
-    if (video != null) {
-      video.style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
+    try {
+      (html.window as dynamic).setCameraMirror(mirror);
+    } catch (e) {
+      debugPrint('Camera mirror error: $e');
     }
   }
 
