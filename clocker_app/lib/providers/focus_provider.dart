@@ -16,6 +16,7 @@ class FocusProvider extends ChangeNotifier {
   FocusMode _selectedMode = FocusMode.deepFocus;
   bool _isRunning = false;
   bool _isPaused = false;
+  bool _servicesStarted = false;
   int _distractionCount = 0;
   final DatabaseHelperInterface _db = DatabaseFactory.create();
 
@@ -42,6 +43,7 @@ class FocusProvider extends ChangeNotifier {
   FocusMode get selectedMode => _selectedMode;
   bool get isRunning => _isRunning;
   bool get isPaused => _isPaused;
+  bool get servicesStarted => _servicesStarted;
   int get distractionCount => _distractionCount;
   Duration get remaining {
     final r = _targetDuration - _elapsed;
@@ -120,9 +122,8 @@ class FocusProvider extends ChangeNotifier {
     _elapsed = Duration.zero;
     _isRunning = true;
     _isPaused = false;
+    _servicesStarted = false;
     _distractionCount = 0;
-
-    _startServices();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
@@ -148,45 +149,51 @@ class FocusProvider extends ChangeNotifier {
   }
 
   Future<void> _startServices() async {
-    Future.delayed(const Duration(milliseconds: 300), () async {
+    if (!_isRunning || _servicesStarted) return;
+    _servicesStarted = true;
+
+    if (_enableWhiteNoise) {
       try {
-        if (_enableWhiteNoise) {
-          try {
-            await _audioService.ensureInitialized();
-            await _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
-          } catch (e) {
-            debugPrint('White noise error: $e');
-          }
-        }
-
-        if (_enableScreenMonitoring) {
-          try {
-            _screenMonitor.startMonitoring();
-            _nativeMonitor = ScreenMonitorFactory.create();
-            _nativeMonitor!.startNativeMonitoring();
-          } catch (e) {
-            debugPrint('Screen monitor error: $e');
-          }
-        }
-
-        if (_enableAttentionMonitoring) {
-          try {
-            _attentionMonitor.initialize();
-            _attentionMonitor.startMonitoring();
-          } catch (e) {
-            debugPrint('Attention monitor error: $e');
-          }
-        }
-
-        if (_enableCamera) {
-          try {
-            await _cameraService.startCamera();
-          } catch (e) {
-            debugPrint('Camera error: $e');
-          }
-        }
+        await _audioService.ensureInitialized();
+        await _audioService.playWhiteNoise(_selectedNoise, volume: 0.5);
       } catch (e) {
-        debugPrint('Service startup error: $e');
+        debugPrint('White noise error: $e');
+      }
+    }
+
+    if (_enableScreenMonitoring) {
+      try {
+        _screenMonitor.startMonitoring();
+        _nativeMonitor = ScreenMonitorFactory.create();
+        _nativeMonitor!.startNativeMonitoring();
+      } catch (e) {
+        debugPrint('Screen monitor error: $e');
+      }
+    }
+
+    if (_enableAttentionMonitoring) {
+      try {
+        _attentionMonitor.initialize();
+        _attentionMonitor.startMonitoring();
+      } catch (e) {
+        debugPrint('Attention monitor error: $e');
+      }
+    }
+
+    if (_enableCamera) {
+      try {
+        await _cameraService.startCamera();
+      } catch (e) {
+        debugPrint('Camera error: $e');
+      }
+    }
+  }
+
+  void beginServices() {
+    if (!_isRunning || _servicesStarted) return;
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (_isRunning && !_servicesStarted) {
+        _startServices();
       }
     });
   }
@@ -290,6 +297,7 @@ class FocusProvider extends ChangeNotifier {
       debugPrint('Stop services error: $e');
     }
 
+    _servicesStarted = false;
     notifyListeners();
   }
 
@@ -297,6 +305,7 @@ class FocusProvider extends ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
     _isPaused = false;
+    _servicesStarted = false;
 
     _audioService.stopWhiteNoise();
     _stopServices();

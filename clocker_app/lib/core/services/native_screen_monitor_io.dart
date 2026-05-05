@@ -38,6 +38,8 @@ class NativeScreenMonitorImpl implements ScreenMonitorInterface {
       _getMacForegroundApp();
     } else if (Platform.isLinux) {
       _getLinuxForegroundApp();
+    } else if (Platform.isAndroid) {
+      _getAndroidForegroundApp();
     }
   }
 
@@ -163,6 +165,48 @@ if ($procId -gt 0) {
       }
     } catch (e) {
       debugPrint('Linux foreground app error: $e');
+    }
+  }
+
+  void _getAndroidForegroundApp() {
+    try {
+      final result = Process.runSync('dumpsys', ['activity', 'top']);
+      if (result.exitCode == 0) {
+        final output = result.stdout.toString();
+        final match = RegExp(r'ACTIVITY\s+(\S+)/').firstMatch(output);
+        if (match != null) {
+          final packageName = match.group(1) ?? '';
+          if (packageName.isNotEmpty && packageName != _lastDetectedApp) {
+            _lastDetectedApp = packageName;
+            _monitor.reportForegroundApp(packageName);
+            debugPrint('Android foreground: $packageName');
+          }
+        }
+      }
+    } catch (e) {
+      _getAndroidForegroundAppFallback();
+    }
+  }
+
+  void _getAndroidForegroundAppFallback() {
+    try {
+      final result = Process.runSync('dumpsys', ['activity', 'activities']);
+      if (result.exitCode == 0) {
+        final output = result.stdout.toString();
+        final match = RegExp(
+          r'mResumedActivity.*?{.*?(\S+)/\S+}',
+        ).firstMatch(output);
+        if (match != null) {
+          final packageName = match.group(1) ?? '';
+          if (packageName.isNotEmpty && packageName != _lastDetectedApp) {
+            _lastDetectedApp = packageName;
+            _monitor.reportForegroundApp(packageName);
+            debugPrint('Android foreground (fallback): $packageName');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Android foreground app error: $e');
     }
   }
 

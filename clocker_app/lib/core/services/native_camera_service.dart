@@ -99,17 +99,20 @@ class NativeCameraService implements WebCameraService {
     if (_controller == null || !_controller!.value.isInitialized) {
       return null;
     }
+    final ratio = _controller!.value.aspectRatio;
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: SizedBox(
         width: 200,
-        height: 150,
-        child: Transform(
-          alignment: Alignment.center,
-          transform: _mirror
-              ? (Matrix4.identity()..setEntry(0, 0, -1.0))
-              : Matrix4.identity(),
-          child: CameraPreview(_controller!),
+        child: AspectRatio(
+          aspectRatio: ratio > 0 ? ratio : 4.0 / 3.0,
+          child: Transform(
+            alignment: Alignment.center,
+            transform: _mirror
+                ? (Matrix4.identity()..setEntry(0, 0, -1.0))
+                : Matrix4.identity(),
+            child: CameraPreview(_controller!),
+          ),
         ),
       ),
     );

@@ -233,10 +233,30 @@ class ScreenMonitorService {
       _isPageVisible = visible;
       if (!visible) {
         _currentApp = 'LeftPage';
+        _appSwitchCount++;
+        _switchHistory.add(
+          AppSwitchEvent(
+            fromApp: 'Clocker',
+            toApp: '离开页面',
+            timestamp: DateTime.now(),
+            category: AppCategory.entertainment,
+          ),
+        );
       } else {
+        _appSwitchCount++;
         _currentApp = 'Clocker';
+        _switchHistory.add(
+          AppSwitchEvent(
+            fromApp: '离开页面',
+            toApp: 'Clocker',
+            timestamp: DateTime.now(),
+            category: AppCategory.productive,
+          ),
+        );
       }
-      debugPrint('Page visibility: ${visible ? "visible" : "hidden"}');
+      debugPrint(
+        'Page visibility: ${visible ? "visible" : "hidden"}, switches: $_appSwitchCount',
+      );
     }
   }
 

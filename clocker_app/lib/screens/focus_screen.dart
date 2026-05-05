@@ -653,95 +653,108 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildCameraPanel(FocusProvider focusProvider) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.videocam, color: AppColors.primary, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                '摄像头监控',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: focusProvider.isCameraActive
-                      ? AppColors.success
-                      : AppColors.danger,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                focusProvider.isCameraActive ? '运行中' : '未启动',
-                style: TextStyle(
-                  color: focusProvider.isCameraActive
-                      ? AppColors.success
-                      : AppColors.danger,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '摄像头画面显示在页面右上角，用于注意力检测和人脸追踪',
-            style: TextStyle(color: AppColors.textHint, fontSize: 11),
-          ),
-          if (focusProvider.isCameraActive) ...[
-            const SizedBox(height: 10),
-            Center(
-              child:
-                  focusProvider.cameraService.buildCameraPreview() ??
-                  Container(
-                    width: 200,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.videocam,
-                            color: AppColors.primary.withValues(alpha: 0.5),
-                            size: 32,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '摄像头预览',
-                            style: TextStyle(
-                              color: AppColors.textHint,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.videocam, color: AppColors.primary, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  '摄像头监控',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
+                ),
+                const Spacer(),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: focusProvider.isCameraActive
+                        ? AppColors.success
+                        : AppColors.danger,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  focusProvider.isCameraActive ? '运行中' : '未启动',
+                  style: TextStyle(
+                    color: focusProvider.isCameraActive
+                        ? AppColors.success
+                        : AppColors.danger,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '摄像头画面显示在页面右上角，用于注意力检测和人脸追踪',
+              style: TextStyle(color: AppColors.textHint, fontSize: 11),
+            ),
+            AnimatedOpacity(
+              opacity: focusProvider.isCameraActive ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeOut,
+              child: focusProvider.isCameraActive
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Center(
+                        child:
+                            focusProvider.cameraService.buildCameraPreview() ??
+                            Container(
+                              width: 200,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.videocam,
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '摄像头预览',
+                                      style: TextStyle(
+                                        color: AppColors.textHint,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1101,7 +1114,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     FocusProvider focusProvider,
     SpacetimeProvider spacetimeProvider,
   ) {
-    final st = spacetimeProvider.activeSpacetime!;
+    final st = spacetimeProvider.activeSpacetime;
+    if (st == null) return;
     focusProvider.setFlowRateGetter(() {
       final safeC = st.c > 0 ? st.c : 1.0;
       final engine = LorentzEngine(v0: st.v0, c: safeC, flowMode: st.flowMode);
@@ -1112,6 +1126,9 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       return engine.calculateFlowRate(clampedV);
     });
     focusProvider.startFocus(st.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      focusProvider.beginServices();
+    });
   }
 
   Future<void> _endFocus(
