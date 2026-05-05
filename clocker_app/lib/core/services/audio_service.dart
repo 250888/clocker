@@ -1,9 +1,181 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'native_audio_stub.dart' if (dart.library.html) 'web_audio_impl.dart';
+
+class _NoiseParams {
+  final String soundId;
+  final double volume;
+  final int durationSeconds;
+  _NoiseParams(this.soundId, this.volume, this.durationSeconds);
+}
+
+Uint8List _generateNoisePcmIsolate(_NoiseParams params) {
+  return _generateNoisePcmStatic(
+    params.soundId,
+    params.volume,
+    params.durationSeconds,
+  );
+}
+
+Uint8List _generateNoisePcmStatic(
+  String soundId,
+  double volume,
+  int durationSeconds,
+) {
+  const sampleRate = 44100;
+  final totalSamples = sampleRate * durationSeconds;
+  final pcm = Float64List(totalSamples);
+  final random = Random();
+  final noise = List.generate(totalSamples, (_) => random.nextDouble() * 2 - 1);
+
+  double x1a = 0, x2a = 0, y1a = 0, y2a = 0;
+  double x1b = 0, x2b = 0, y1b = 0, y2b = 0;
+  double lfoPhase = 0;
+
+  double biquad(
+    String type,
+    double freq,
+    double Q,
+    double x0,
+    double x1p,
+    double x2p,
+    double y1p,
+    double y2p,
+  ) {
+    final w0 = 2 * pi * freq / sampleRate;
+    final alpha = sin(w0) / (2 * Q);
+    double b0, b1, b2, a0, a1, a2;
+    switch (type) {
+      case 'lowpass':
+        b0 = (1 - cos(w0)) / 2;
+        b1 = 1 - cos(w0);
+        b2 = (1 - cos(w0)) / 2;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      case 'highpass':
+        b0 = (1 + cos(w0)) / 2;
+        b1 = -(1 + cos(w0));
+        b2 = (1 + cos(w0)) / 2;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      case 'bandpass':
+        b0 = alpha;
+        b1 = 0;
+        b2 = -alpha;
+        a0 = 1 + alpha;
+        a1 = -2 * cos(w0);
+        a2 = 1 - alpha;
+        break;
+      default:
+        b0 = 1;
+        b1 = 0;
+        b2 = 0;
+        a0 = 1;
+        a1 = 0;
+        a2 = 0;
+    }
+    return (b0 / a0) * x0 +
+        (b1 / a0) * x1p +
+        (b2 / a0) * x2p -
+        (a1 / a0) * y1p -
+        (a2 / a0) * y2p;
+  }
+
+  for (int i = 0; i < totalSamples; i++) {
+    final x0 = noise[i];
+    double sample = 0;
+    switch (soundId) {
+      case 'rain':
+        sample = biquad('bandpass', 2500, 0.5, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = sample;
+      case 'fire':
+        final s1 = biquad('lowpass', 600, 1.0, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = s1;
+        sample = biquad('highpass', 80, 0.7071, s1, x1b, x2b, y1b, y2b);
+        x2b = x1b;
+        x1b = s1;
+        y2b = y1b;
+        y1b = sample;
+      case 'ocean':
+        lfoPhase += 0.12 / sampleRate * 2 * pi;
+        final modFreq = 800 + sin(lfoPhase) * 400;
+        sample = biquad('lowpass', modFreq, 0.8, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = sample;
+      case 'wind':
+        lfoPhase += 0.08 / sampleRate * 2 * pi;
+        final modFreq = 400 + sin(lfoPhase) * 300;
+        final s1 = biquad('bandpass', modFreq, 0.3, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = s1;
+        sample = biquad('lowpass', 1200, 0.7071, s1, x1b, x2b, y1b, y2b);
+        x2b = x1b;
+        x1b = s1;
+        y2b = y1b;
+        y1b = sample;
+      case 'forest':
+        final s1 = biquad('bandpass', 6000, 2.0, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = s1;
+        sample = biquad('lowpass', 8000, 0.7071, s1, x1b, x2b, y1b, y2b);
+        x2b = x1b;
+        x1b = s1;
+        y2b = y1b;
+        y1b = sample;
+      case 'cafe':
+        final s1 = biquad('bandpass', 1500, 0.6, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a;
+        x1a = x0;
+        y2a = y1a;
+        y1a = s1;
+        sample = biquad('lowpass', 3000, 0.7071, s1, x1b, x2b, y1b, y2b);
+        x2b = x1b;
+        x1b = s1;
+        y2b = y1b;
+        y1b = sample;
+      default:
+        sample = x0 * 0.1;
+    }
+    pcm[i] = sample * volume;
+  }
+
+  double maxVal = 0.001;
+  for (int i = 0; i < totalSamples; i++) {
+    final abs = pcm[i].abs();
+    if (abs > maxVal) maxVal = abs;
+  }
+  final normFactor = maxVal > 0.9 ? 0.9 / maxVal : 1.0;
+  final result = ByteData(totalSamples * 2);
+  for (int i = 0; i < totalSamples; i++) {
+    result.setInt16(
+      i * 2,
+      (pcm[i] * normFactor * 32767).toInt().clamp(-32768, 32767),
+      Endian.little,
+    );
+  }
+  return result.buffer.asUint8List();
+}
 
 class AudioService {
   static final AudioService _instance = AudioService._internal();
@@ -65,244 +237,6 @@ class AudioService {
     header.setUint32(36, 0x64617461, Endian.big);
     header.setUint32(40, dataSize, Endian.little);
     return Uint8List.fromList([...header.buffer.asUint8List(), ...pcmData]);
-  }
-
-  List<double> _biquadCoeffs(String type, double freq, double Q) {
-    final w0 = 2 * pi * freq / _sampleRate;
-    final alpha = sin(w0) / (2 * Q);
-    double b0, b1, b2, a0, a1, a2;
-
-    switch (type) {
-      case 'lowpass':
-        b0 = (1 - cos(w0)) / 2;
-        b1 = 1 - cos(w0);
-        b2 = (1 - cos(w0)) / 2;
-        a0 = 1 + alpha;
-        a1 = -2 * cos(w0);
-        a2 = 1 - alpha;
-        break;
-      case 'highpass':
-        b0 = (1 + cos(w0)) / 2;
-        b1 = -(1 + cos(w0));
-        b2 = (1 + cos(w0)) / 2;
-        a0 = 1 + alpha;
-        a1 = -2 * cos(w0);
-        a2 = 1 - alpha;
-        break;
-      case 'bandpass':
-        b0 = alpha;
-        b1 = 0;
-        b2 = -alpha;
-        a0 = 1 + alpha;
-        a1 = -2 * cos(w0);
-        a2 = 1 - alpha;
-        break;
-      default:
-        b0 = 1;
-        b1 = 0;
-        b2 = 0;
-        a0 = 1;
-        a1 = 0;
-        a2 = 0;
-    }
-
-    return [b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0];
-  }
-
-  Uint8List _generateNoisePcm(
-    String soundId,
-    double volume,
-    int durationSeconds,
-  ) {
-    final totalSamples = _sampleRate * durationSeconds;
-    final pcm = Float64List(totalSamples);
-    final random = Random();
-
-    final noise = List.generate(
-      totalSamples,
-      (_) => random.nextDouble() * 2 - 1,
-    );
-
-    double x1a = 0, x2a = 0, y1a = 0, y2a = 0;
-    double x1b = 0, x2b = 0, y1b = 0, y2b = 0;
-    double lfoPhase = 0;
-
-    for (int i = 0; i < totalSamples; i++) {
-      final x0 = noise[i];
-      double sample = 0;
-
-      switch (soundId) {
-        case 'rain':
-          {
-            final c = _biquadCoeffs('bandpass', 2500, 0.5);
-            final y0 =
-                c[0] * x0 + c[1] * x1a + c[2] * x2a - c[3] * y1a - c[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = y0;
-            sample = y0;
-          }
-          break;
-
-        case 'fire':
-          {
-            final c1 = _biquadCoeffs('lowpass', 600, 1.0);
-            final s1 =
-                c1[0] * x0 +
-                c1[1] * x1a +
-                c1[2] * x2a -
-                c1[3] * y1a -
-                c1[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = s1;
-
-            final c2 = _biquadCoeffs('highpass', 80, 0.7071);
-            final s2 =
-                c2[0] * s1 +
-                c2[1] * x1b +
-                c2[2] * x2b -
-                c2[3] * y1b -
-                c2[4] * y2b;
-            x2b = x1b;
-            x1b = s1;
-            y2b = y1b;
-            y1b = s2;
-            sample = s2;
-          }
-          break;
-
-        case 'ocean':
-          {
-            lfoPhase += 0.12 / _sampleRate * 2 * pi;
-            final modFreq = 800 + sin(lfoPhase) * 400;
-            final c = _biquadCoeffs('lowpass', modFreq, 0.8);
-            final y0 =
-                c[0] * x0 + c[1] * x1a + c[2] * x2a - c[3] * y1a - c[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = y0;
-            sample = y0;
-          }
-          break;
-
-        case 'wind':
-          {
-            lfoPhase += 0.08 / _sampleRate * 2 * pi;
-            final modFreq = 400 + sin(lfoPhase) * 300;
-            final c1 = _biquadCoeffs('bandpass', modFreq, 0.3);
-            final s1 =
-                c1[0] * x0 +
-                c1[1] * x1a +
-                c1[2] * x2a -
-                c1[3] * y1a -
-                c1[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = s1;
-
-            final c2 = _biquadCoeffs('lowpass', 1200, 0.7071);
-            final s2 =
-                c2[0] * s1 +
-                c2[1] * x1b +
-                c2[2] * x2b -
-                c2[3] * y1b -
-                c2[4] * y2b;
-            x2b = x1b;
-            x1b = s1;
-            y2b = y1b;
-            y1b = s2;
-            sample = s2;
-          }
-          break;
-
-        case 'forest':
-          {
-            final c1 = _biquadCoeffs('bandpass', 6000, 2.0);
-            final s1 =
-                c1[0] * x0 +
-                c1[1] * x1a +
-                c1[2] * x2a -
-                c1[3] * y1a -
-                c1[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = s1;
-
-            final c2 = _biquadCoeffs('lowpass', 8000, 0.7071);
-            final s2 =
-                c2[0] * s1 +
-                c2[1] * x1b +
-                c2[2] * x2b -
-                c2[3] * y1b -
-                c2[4] * y2b;
-            x2b = x1b;
-            x1b = s1;
-            y2b = y1b;
-            y1b = s2;
-            sample = s2;
-          }
-          break;
-
-        case 'cafe':
-          {
-            final c1 = _biquadCoeffs('bandpass', 1500, 0.6);
-            final s1 =
-                c1[0] * x0 +
-                c1[1] * x1a +
-                c1[2] * x2a -
-                c1[3] * y1a -
-                c1[4] * y2a;
-            x2a = x1a;
-            x1a = x0;
-            y2a = y1a;
-            y1a = s1;
-
-            final c2 = _biquadCoeffs('lowpass', 3000, 0.7071);
-            final s2 =
-                c2[0] * s1 +
-                c2[1] * x1b +
-                c2[2] * x2b -
-                c2[3] * y1b -
-                c2[4] * y2b;
-            x2b = x1b;
-            x1b = s1;
-            y2b = y1b;
-            y1b = s2;
-            sample = s2;
-          }
-          break;
-
-        default:
-          sample = x0 * 0.1;
-      }
-
-      sample *= volume;
-      pcm[i] = sample;
-    }
-
-    double maxVal = 0.001;
-    for (int i = 0; i < totalSamples; i++) {
-      final abs = pcm[i].abs();
-      if (abs > maxVal) maxVal = abs;
-    }
-    final normFactor = maxVal > 0.9 ? 0.9 / maxVal : 1.0;
-
-    final result = ByteData(totalSamples * 2);
-    for (int i = 0; i < totalSamples; i++) {
-      result.setInt16(
-        i * 2,
-        (pcm[i] * normFactor * 32767).toInt().clamp(-32768, 32767),
-        Endian.little,
-      );
-    }
-
-    return result.buffer.asUint8List();
   }
 
   Uint8List _generateTonePcm(
@@ -377,7 +311,15 @@ class AudioService {
       final ok = await platformPlayWhiteNoise(soundId, volume);
       if (!ok) {
         _ambientPlayer = AudioPlayer();
-        final pcmData = _generateNoisePcm(soundId, volume, 30);
+        final Uint8List pcmData;
+        if (kIsWeb) {
+          pcmData = _generateNoisePcmStatic(soundId, volume, 4);
+        } else {
+          pcmData = await compute(
+            _generateNoisePcmIsolate,
+            _NoiseParams(soundId, volume, 4),
+          );
+        }
         final wavData = _generateWav(pcmData, _sampleRate, 1);
         await _ambientPlayer!.setReleaseMode(ReleaseMode.loop);
         await _ambientPlayer!.setVolume(volume);
