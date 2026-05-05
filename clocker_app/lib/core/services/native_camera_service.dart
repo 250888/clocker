@@ -107,7 +107,7 @@ class NativeCameraService implements WebCameraService {
         child: Transform(
           alignment: Alignment.center,
           transform: _mirror
-              ? Matrix4.rotationY(3.14159265)
+              ? (Matrix4.identity()..setEntry(0, 0, -1.0))
               : Matrix4.identity(),
           child: CameraPreview(_controller!),
         ),
