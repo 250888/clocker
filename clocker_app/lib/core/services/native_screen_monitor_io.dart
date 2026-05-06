@@ -190,12 +190,13 @@ if ($procId -gt 0) {
 
   void _getAndroidForegroundAppFallback() {
     try {
-      final result = Process.runSync('dumpsys', ['activity', 'activities']);
+      final result = Process.runSync(
+        'dumpsys',
+        ['activity', 'activities'],
+      );
       if (result.exitCode == 0) {
         final output = result.stdout.toString();
-        final match = RegExp(
-          r'mResumedActivity.*?{.*?(\S+)/\S+}',
-        ).firstMatch(output);
+        final match = RegExp(r'mResumedActivity.*?{.*?(\S+)/\S+}').firstMatch(output);
         if (match != null) {
           final packageName = match.group(1) ?? '';
           if (packageName.isNotEmpty && packageName != _lastDetectedApp) {

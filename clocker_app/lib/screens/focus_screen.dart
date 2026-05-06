@@ -89,48 +89,65 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            PomodoroTimer(
-              elapsed: focusProvider.elapsed,
-              target: focusProvider.targetDuration,
-              isRunning: focusProvider.isRunning,
-              isPaused: focusProvider.isPaused,
-              mode: focusProvider.selectedMode,
-              onStart: () => _startFocus(focusProvider, spacetimeProvider),
-              onPause: focusProvider.pauseFocus,
-              onResume: focusProvider.resumeFocus,
-              onEnd: () => _endFocus(focusProvider, spacetimeProvider),
-              onModeChange: focusProvider.isRunning ? null : _showModeSelector,
+            RepaintBoundary(
+              child: PomodoroTimer(
+                elapsed: focusProvider.elapsed,
+                target: focusProvider.targetDuration,
+                isRunning: focusProvider.isRunning,
+                isPaused: focusProvider.isPaused,
+                mode: focusProvider.selectedMode,
+                onStart: () => _startFocus(focusProvider, spacetimeProvider),
+                onPause: focusProvider.pauseFocus,
+                onResume: focusProvider.resumeFocus,
+                onEnd: () => _endFocus(focusProvider, spacetimeProvider),
+                onModeChange: focusProvider.isRunning
+                    ? null
+                    : _showModeSelector,
+              ),
             ),
             const SizedBox(height: 16),
-            if (!focusProvider.isRunning) ...[
-              _buildDurationSelector(),
-              const SizedBox(height: 16),
-              _buildModeGrid(),
-              const SizedBox(height: 16),
-              _buildNoiseSelector(focusProvider),
-              const SizedBox(height: 16),
-              _buildMonitorToggles(focusProvider),
-              if (focusProvider.isInForceBreak) ...[
-                const SizedBox(height: 16),
-                _buildForceBreakBanner(focusProvider),
-              ],
-            ] else ...[
-              _buildFocusStats(focusProvider, spacetimeProvider),
-              const SizedBox(height: 12),
-              _buildMonitorPanel(focusProvider),
-              if (focusProvider.enableCamera) ...[
-                const SizedBox(height: 12),
-                _buildCameraPanel(focusProvider),
-              ],
-              if (focusProvider.enableAttentionMonitoring) ...[
-                const SizedBox(height: 12),
-                _buildAttentionPanel(focusProvider),
-              ],
-              if (focusProvider.enableWhiteNoise) ...[
-                const SizedBox(height: 12),
-                _buildVolumeControl(focusProvider),
-              ],
-            ],
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 400),
+              crossFadeState: focusProvider.isRunning
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDurationSelector(),
+                  const SizedBox(height: 16),
+                  _buildModeGrid(),
+                  const SizedBox(height: 16),
+                  _buildNoiseSelector(focusProvider),
+                  const SizedBox(height: 16),
+                  _buildMonitorToggles(focusProvider),
+                  if (focusProvider.isInForceBreak) ...[
+                    const SizedBox(height: 16),
+                    _buildForceBreakBanner(focusProvider),
+                  ],
+                ],
+              ),
+              secondChild: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildFocusStats(focusProvider, spacetimeProvider),
+                  const SizedBox(height: 12),
+                  _buildMonitorPanel(focusProvider),
+                  if (focusProvider.enableCamera) ...[
+                    const SizedBox(height: 12),
+                    _buildCameraPanel(focusProvider),
+                  ],
+                  if (focusProvider.enableAttentionMonitoring) ...[
+                    const SizedBox(height: 12),
+                    _buildAttentionPanel(focusProvider),
+                  ],
+                  if (focusProvider.enableWhiteNoise) ...[
+                    const SizedBox(height: 12),
+                    _buildVolumeControl(focusProvider),
+                  ],
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             _buildRecentSessions(focusProvider, spacetimeProvider),
           ],
@@ -663,6 +680,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -704,54 +722,56 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
               '摄像头画面显示在页面右上角，用于注意力检测和人脸追踪',
               style: TextStyle(color: AppColors.textHint, fontSize: 11),
             ),
-            AnimatedOpacity(
-              opacity: focusProvider.isCameraActive ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 600),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 400),
               curve: Curves.easeOut,
-              child: focusProvider.isCameraActive
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Center(
-                        child:
-                            focusProvider.cameraService.buildCameraPreview() ??
-                            Container(
-                              width: 200,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                ),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.videocam,
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      size: 32,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '摄像头预览',
-                                      style: TextStyle(
-                                        color: AppColors.textHint,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+              alignment: Alignment.topCenter,
+              child: ClipRect(
+                child: AnimatedOpacity(
+                  opacity: focusProvider.isCameraActive ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 400),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Center(
+                      child:
+                          focusProvider.cameraService.buildCameraPreview() ??
+                          Container(
+                            width: 200,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
                               ),
                             ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.videocam,
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    size: 32,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '摄像头预览',
+                                    style: TextStyle(
+                                      color: AppColors.textHint,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
