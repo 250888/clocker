@@ -17,6 +17,8 @@ class FocusScreen extends StatefulWidget {
 class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   FocusMode _selectedMode = FocusMode.deepFocus;
   Duration _targetDuration = const Duration(minutes: 25);
+  Future<List<FocusSession>>? _cachedSessionsFuture;
+  String? _cachedSpacetimeId;
 
   final List<Map<String, dynamic>> _durations = [
     {'label': '15分钟', 'duration': const Duration(minutes: 15)},
@@ -1061,8 +1063,12 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   ) {
     final spacetimeId = spacetimeProvider.activeSpacetime?.id;
     if (spacetimeId == null) return const SizedBox.shrink();
+    if (_cachedSessionsFuture == null || _cachedSpacetimeId != spacetimeId) {
+      _cachedSpacetimeId = spacetimeId;
+      _cachedSessionsFuture = focusProvider.getFocusHistory(spacetimeId);
+    }
     return FutureBuilder<List<FocusSession>>(
-      future: focusProvider.getFocusHistory(spacetimeId),
+      future: _cachedSessionsFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const SizedBox.shrink();

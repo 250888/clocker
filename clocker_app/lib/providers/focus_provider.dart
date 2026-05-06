@@ -130,16 +130,22 @@ class FocusProvider extends ChangeNotifier {
     _distractionCount = 0;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _elapsed += const Duration(seconds: 1);
+      try {
+        _elapsed += const Duration(seconds: 1);
 
-      if (_elapsed.inSeconds % 30 == 0 && _enableWhiteNoise) {
-        _audioService.adjustToFlowRate(_effectiveFlowRateGetter?.call() ?? 2.0);
-      }
+        if (_elapsed.inSeconds % 30 == 0 && _enableWhiteNoise) {
+          _audioService.adjustToFlowRate(
+            _effectiveFlowRateGetter?.call() ?? 2.0,
+          );
+        }
 
-      notifyListeners();
+        notifyListeners();
 
-      if (_elapsed >= _targetDuration) {
-        completeFocus();
+        if (_elapsed >= _targetDuration) {
+          completeFocus();
+        }
+      } catch (e) {
+        debugPrint('Timer callback error: $e');
       }
     });
 
@@ -243,11 +249,15 @@ class FocusProvider extends ChangeNotifier {
     }
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _elapsed += const Duration(seconds: 1);
-      notifyListeners();
+      try {
+        _elapsed += const Duration(seconds: 1);
+        notifyListeners();
 
-      if (_elapsed >= _targetDuration) {
-        completeFocus();
+        if (_elapsed >= _targetDuration) {
+          completeFocus();
+        }
+      } catch (e) {
+        debugPrint('Resume timer error: $e');
       }
     });
     notifyListeners();
