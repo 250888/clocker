@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/focus_session.dart';
+
 import '../core/utils/database_factory.dart';
 import '../core/services/audio_service.dart';
 import '../core/services/screen_monitor_service.dart';
@@ -17,6 +18,7 @@ class FocusProvider extends ChangeNotifier {
   bool _isRunning = false;
   bool _isPaused = false;
   bool _servicesStarted = false;
+  bool _servicesInitialized = false;
   int _distractionCount = 0;
   final DatabaseHelperInterface _db = DatabaseFactory.create();
 
@@ -44,6 +46,7 @@ class FocusProvider extends ChangeNotifier {
   bool get isRunning => _isRunning;
   bool get isPaused => _isPaused;
   bool get servicesStarted => _servicesStarted;
+  bool get servicesInitialized => _servicesInitialized;
   int get distractionCount => _distractionCount;
   Duration get remaining {
     final r = _targetDuration - _elapsed;
@@ -123,6 +126,7 @@ class FocusProvider extends ChangeNotifier {
     _isRunning = true;
     _isPaused = false;
     _servicesStarted = false;
+    _servicesInitialized = false;
     _distractionCount = 0;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -187,6 +191,9 @@ class FocusProvider extends ChangeNotifier {
         debugPrint('Camera error: $e');
       }
     }
+
+    _servicesInitialized = true;
+    notifyListeners();
   }
 
   void beginServices() {
@@ -298,6 +305,7 @@ class FocusProvider extends ChangeNotifier {
     }
 
     _servicesStarted = false;
+    _servicesInitialized = false;
     notifyListeners();
   }
 
@@ -306,6 +314,7 @@ class FocusProvider extends ChangeNotifier {
     _isRunning = false;
     _isPaused = false;
     _servicesStarted = false;
+    _servicesInitialized = false;
 
     _audioService.stopWhiteNoise();
     _stopServices();

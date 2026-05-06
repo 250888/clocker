@@ -108,25 +108,28 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
             const SizedBox(height: 16),
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 400),
-              crossFadeState: focusProvider.isRunning
+              crossFadeState:
+                  focusProvider.isRunning && focusProvider.servicesInitialized
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
-              firstChild: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildDurationSelector(),
-                  const SizedBox(height: 16),
-                  _buildModeGrid(),
-                  const SizedBox(height: 16),
-                  _buildNoiseSelector(focusProvider),
-                  const SizedBox(height: 16),
-                  _buildMonitorToggles(focusProvider),
-                  if (focusProvider.isInForceBreak) ...[
-                    const SizedBox(height: 16),
-                    _buildForceBreakBanner(focusProvider),
-                  ],
-                ],
-              ),
+              firstChild: focusProvider.isRunning
+                  ? _buildStartupIndicator()
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildDurationSelector(),
+                        const SizedBox(height: 16),
+                        _buildModeGrid(),
+                        const SizedBox(height: 16),
+                        _buildNoiseSelector(focusProvider),
+                        const SizedBox(height: 16),
+                        _buildMonitorToggles(focusProvider),
+                        if (focusProvider.isInForceBreak) ...[
+                          const SizedBox(height: 16),
+                          _buildForceBreakBanner(focusProvider),
+                        ],
+                      ],
+                    ),
               secondChild: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -975,6 +978,44 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
             ),
           ),
           Icon(Icons.volume_up, color: AppColors.textSecondary, size: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStartupIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '正在启动专注服务...',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '初始化音频引擎、监控服务和摄像头',
+            style: TextStyle(color: AppColors.textHint, fontSize: 12),
+          ),
         ],
       ),
     );
