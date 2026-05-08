@@ -1,4 +1,5 @@
 import 'dart:html' as html;
+import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 import 'web_camera_service.dart';
 
@@ -9,6 +10,8 @@ class WebCameraServiceImpl implements WebCameraService {
   bool _isAvailable = true;
   html.VideoElement? _videoEl;
   html.MediaStream? _stream;
+  bool _viewRegistered = false;
+  static const String _viewType = 'clocker-camera-view';
 
   @override
   bool get isActive => _isActive;
@@ -22,6 +25,7 @@ class WebCameraServiceImpl implements WebCameraService {
       final result = await (html.window as dynamic).startCamera();
       _isActive = result == true;
       if (_isActive) {
+        _registerView();
         debugPrint('Web camera started via JS');
         return true;
       }
@@ -38,19 +42,17 @@ class WebCameraServiceImpl implements WebCameraService {
     }
   }
 
-  Future<bool> _startCameraDirect() async {
-    _removeExistingElements();
+  void _registerView() {
+    if (_viewRegistered || _videoEl == null) return;
+    _viewRegistered = true;
+    ui_web.platformViewRegistry.registerViewFactory(
+      _viewType,
+      (int viewId) => _videoEl!,
+    );
+  }
 
-    final container = html.DivElement()
-      ..id = 'camera-container'
-      ..style.position = 'fixed'
-      ..style.top = '0'
-      ..style.left = '0'
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..style.zIndex = '2147483647'
-      ..style.pointerEvents = 'none'
-      ..style.overflow = 'hidden';
+  Future<bool> _startCameraDirect() async {
+    _videoEl?.srcObject = null;
 
     _videoEl = html.VideoElement()
       ..autoplay = true
@@ -60,10 +62,9 @@ class WebCameraServiceImpl implements WebCameraService {
       ..style.height = '100%'
       ..style.objectFit = 'cover'
       ..style.transform = 'scaleX(-1)'
-      ..style.display = 'none';
+      ..style.borderRadius = '8px';
 
-    container.append(_videoEl!);
-    html.document.body!.append(container);
+    _registerView();
 
     final constraints = {
       'video': {
@@ -79,21 +80,9 @@ class WebCameraServiceImpl implements WebCameraService {
     );
     _stream = stream;
     _videoEl!.srcObject = stream;
-    _videoEl!.style.display = 'block';
     _isActive = true;
     debugPrint('Web camera started via direct getUserMedia');
     return true;
-  }
-
-  void _removeExistingElements() {
-    try {
-      final existing = html.document.getElementById('camera-container');
-      existing?.remove();
-    } catch (_) {}
-
-    try {
-      (html.window as dynamic).stopCamera();
-    } catch (_) {}
   }
 
   @override
@@ -102,39 +91,31 @@ class WebCameraServiceImpl implements WebCameraService {
       _stream?.getTracks().forEach((t) => t.stop());
       _stream = null;
       _videoEl?.srcObject = null;
-      _videoEl = null;
     } catch (_) {}
 
-    try {
-      (html.window as dynamic).stopCamera();
-    } catch (_) {}
-
-    _removeExistingElements();
     _isActive = false;
   }
 
   @override
-  void setOpacity(double opacity) {
-    try {
-      (html.window as dynamic).setCameraOpacity(opacity);
-    } catch (_) {}
-    try {
-      _videoEl?.style.opacity = '$opacity';
-    } catch (_) {}
-  }
+  void setOpacity(double opacity) {}
 
   @override
   void setMirror(bool mirror) {
-    try {
-      (html.window as dynamic).setCameraMirror(mirror);
-    } catch (_) {}
-    try {
-      _videoEl?.style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
-    } catch (_) {}
+    _videoEl?.style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
   }
 
   @override
-  Widget? buildCameraPreview() => null;
+  Widget? buildCameraPreview() {
+    if (!_isActive || _videoEl == null) return null;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 200,
+        height: 150,
+        child: HtmlElementView(viewType: _viewType),
+      ),
+    );
+  }
 
   @override
   void dispose() {
