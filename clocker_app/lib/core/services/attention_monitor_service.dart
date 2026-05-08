@@ -59,7 +59,8 @@ class AttentionMonitorService {
 
   double get focusStability {
     if (_scoreHistory.length < 5) return 1.0;
-    final recent = _scoreHistory.sublist(_scoreHistory.length - 10);
+    final start = (_scoreHistory.length - 10).clamp(0, _scoreHistory.length);
+    final recent = _scoreHistory.sublist(start);
     final avg = recent.reduce((a, b) => a + b) / recent.length;
     final variance = recent.map((s) => pow(s - avg, 2)).reduce((a, b) => a + b) / recent.length;
     return (1.0 - sqrt(variance)).clamp(0.0, 1.0);
