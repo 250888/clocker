@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 import 'native_audio_stub.dart' if (dart.library.html) 'web_audio_impl.dart';
 
 class _NoiseParams {
@@ -311,19 +313,33 @@ class AudioService {
       final ok = await platformPlayWhiteNoise(soundId, volume);
       if (!ok) {
         _ambientPlayer = AudioPlayer();
+        final int durationSec = kIsWeb ? 4 : 30;
         final Uint8List pcmData;
         if (kIsWeb) {
-          pcmData = _generateNoisePcmStatic(soundId, volume, 4);
+          pcmData = _generateNoisePcmStatic(soundId, volume, durationSec);
         } else {
           pcmData = await compute(
             _generateNoisePcmIsolate,
-            _NoiseParams(soundId, volume, 4),
+            _NoiseParams(soundId, volume, durationSec),
           );
         }
         final wavData = _generateWav(pcmData, _sampleRate, 1);
         await _ambientPlayer!.setReleaseMode(ReleaseMode.loop);
         await _ambientPlayer!.setVolume(volume);
-        await _ambientPlayer!.play(BytesSource(wavData));
+
+        if (!kIsWeb) {
+          try {
+            final dir = await getTemporaryDirectory();
+            final file = File('${dir.path}/clocker_noise.wav');
+            await file.writeAsBytes(wavData, flush: true);
+            await _ambientPlayer!.play(DeviceFileSource(file.path));
+          } catch (e) {
+            debugPrint('Temp file fallback: $e');
+            await _ambientPlayer!.play(BytesSource(wavData));
+          }
+        } else {
+          await _ambientPlayer!.play(BytesSource(wavData));
+        }
       }
       debugPrint('Playing white noise: $soundId (native=${!ok})');
     } catch (e) {
@@ -341,6 +357,13 @@ class AudioService {
       _ambientPlayer = null;
     } catch (e) {
       debugPrint('Audio stop error: $e');
+    }
+    if (!kIsWeb) {
+      try {
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/clocker_noise.wav');
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
     }
   }
 
