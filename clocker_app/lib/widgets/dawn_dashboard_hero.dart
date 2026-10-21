@@ -33,6 +33,7 @@ class DawnDashboardHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inFlow = spacetime.isInFlowState;
+    final frozen = spacetime.isFrozen;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +79,7 @@ class DawnDashboardHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'APP 内剩余 ${_fmtDays(spacetime.effectiveAppDaysRemaining)} 天',
+                    'APP 内剩余 ${_fmtDays(spacetime.effectiveAppDaysRemaining)} 天（按当前流速推算）',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
@@ -135,7 +136,13 @@ class DawnDashboardHero extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (inFlow) const _FlowChip(),
+                  if (frozen)
+                    _StatusChip(
+                      text: '冻结中 ${spacetime.freezeRemaining.inHours}h',
+                      color: AppColors.primaryLight,
+                    )
+                  else if (inFlow)
+                    const _StatusChip(text: '心流中'),
                 ],
               ),
               const SizedBox(height: 10),
@@ -235,11 +242,15 @@ class _Delta extends StatelessWidget {
   }
 }
 
-class _FlowChip extends StatelessWidget {
-  const _FlowChip();
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.text, this.color});
+
+  final String text;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final c = color ?? AppColors.primaryLight;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -247,18 +258,14 @@ class _FlowChip extends StatelessWidget {
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _Dot(),
-          SizedBox(width: 5),
+          const SizedBox(width: 5),
           Text(
-            '心流中',
-            style: TextStyle(
-              color: AppColors.primaryLight,
-              fontSize: 9.5,
-              letterSpacing: 1,
-            ),
+            text,
+            style: TextStyle(color: c, fontSize: 9.5, letterSpacing: 1),
           ),
         ],
       ),

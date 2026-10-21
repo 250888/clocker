@@ -5,7 +5,7 @@
 # 2. 或者使用GitHub Actions自动部署
 
 # 设置变量
-GITHUB_USER="your-github-username"  # 替换为你的GitHub用户名
+GITHUB_USER="250888"  # 替换为你的GitHub用户名
 REPO_NAME="clocker"                # 仓库名
 DEPLOY_BRANCH="gh-pages"           # 部署分支
 

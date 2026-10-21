@@ -135,6 +135,7 @@ class _AppEntryState extends State<_AppEntry> {
       deadline: DateTime.now().add(const Duration(days: 18)),
       emoji: '🎓',
       advanceDays: 14,
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
     );
     // v ≈ 7.6 / c 8.0 → γ ≈ 3.2，流速 ≈ 0.62×（真正的「钟慢」演示态）
     await spacetime.addFocusHours(5.0);

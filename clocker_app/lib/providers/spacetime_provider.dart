@@ -27,10 +27,12 @@ class SpacetimeProvider extends ChangeNotifier {
     FlowMode flowMode = FlowMode.relativistic,
     int advanceDays = 14,
     String? emoji,
+    DateTime? createdAt,
   }) async {
     final spacetime = Spacetime(
       name: name,
       deadline: deadline,
+      createdAt: createdAt,
       v0: v0,
       c: c,
       flowMode: flowMode,

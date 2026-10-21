@@ -3,7 +3,7 @@
 # 1. 修改 $GITHUB_USER 为你的GitHub用户名
 # 2. 运行: .\deploy-pages.ps1
 
-$GITHUB_USER = "your-github-username"  # 替换为你的GitHub用户名
+$GITHUB_USER = "250888"  # 替换为你的GitHub用户名
 $REPO_NAME = "clocker"
 $DEPLOY_BRANCH = "gh-pages"
 

@@ -65,7 +65,28 @@ class Spacetime {
     return engine.calculateFlowRate(currentV);
   }
 
+  /// 冻结窗口：冻结后 24 小时内时间流速被锁定为 1.0×（既不加速也不减速）。
+  static const Duration freezeDuration = Duration(hours: 24);
+
+  /// 冻结冷却：每 7 天可使用 1 次。
+  static const Duration freezeCooldown = Duration(days: 7);
+
+  bool get isFrozen {
+    final t = lastFreezeTime;
+    if (t == null) return false;
+    return DateTime.now().difference(t) < freezeDuration;
+  }
+
+  Duration get freezeRemaining {
+    final t = lastFreezeTime;
+    if (t == null || !isFrozen) return Duration.zero;
+    final left = freezeDuration - DateTime.now().difference(t);
+    return left.isNegative ? Duration.zero : left;
+  }
+
   double get effectiveFlowRate {
+    // 冻结期间锁定 1.0×
+    if (isFrozen) return 1.0;
     final engine = LorentzEngine(v0: v0, c: c, flowMode: flowMode);
     if (isInFlowState) return engine.flowStateBonus(currentV);
     return engine.calculateFlowRate(currentV);
@@ -123,12 +144,10 @@ class Spacetime {
   }
 
   bool get canFreeze {
-    final now = DateTime.now();
-    if (lastFreezeTime != null) {
-      final daysSinceLastFreeze = now.difference(lastFreezeTime!).inDays;
-      if (daysSinceLastFreeze < 7) return false;
-    }
-    return timeFreezesUsed < 1;
+    final t = lastFreezeTime;
+    if (t == null) return true;
+    // 每周 1 次：距离上次冻结满 7 天才可再次使用
+    return DateTime.now().difference(t) >= freezeCooldown;
   }
 
   bool get canRewind {
