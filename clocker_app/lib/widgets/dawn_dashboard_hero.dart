@@ -72,28 +72,37 @@ class DawnDashboardHero extends StatelessWidget {
                 ),
               ),
             ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'APP 内剩余 ${_fmtDays(spacetime.effectiveAppDaysRemaining)} 天（按当前流速推算）',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
+            const SizedBox(width: 12),
+            // 右侧读数在窄屏下可收缩，避免溢出
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'APP 内 ${_fmtDays(spacetime.effectiveAppDaysRemaining)} 天',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '截止 ${spacetime.deadline.month}/${spacetime.deadline.day}',
-                    style: const TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 10.5,
+                    const SizedBox(height: 3),
+                    Text(
+                      '按当前流速推算 · 截止 ${spacetime.deadline.month}/${spacetime.deadline.day}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        color: AppColors.textHint,
+                        fontSize: 9.5,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
