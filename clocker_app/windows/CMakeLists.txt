@@ -32,6 +32,12 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# MSVC 14.51+ (VS 2026) 的 STL 把 <experimental/coroutine> 的弃用升级成了硬错误
+# (error STL1011 / C2338)，而 permission_handler_windows 0.2.2 仍给插件加 /await，
+# 不加这个宏整个 Windows 构建会失败。加在这里可在插件 add_subdirectory 之前
+# 继承给所有插件目标；等上游插件改用 C++20 <coroutine> 后可移除本行。
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Compilation settings that should be applied to most targets.
 #
 # Be cautious about adding new options here, as plugins use this function by
