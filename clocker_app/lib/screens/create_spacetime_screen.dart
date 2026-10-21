@@ -4,6 +4,7 @@ import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
 import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
+import '../widgets/dawn_backdrop.dart';
 
 class CreateSpacetimeScreen extends StatefulWidget {
   const CreateSpacetimeScreen({super.key});
@@ -21,6 +22,20 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
   int _advanceDays = 14;
   FlowMode _flowMode = FlowMode.relativistic;
   String _selectedEmoji = '🌌';
+
+  /// 展示用：把历史 emoji 字符串映射为线性图标，避免彩色 emoji 破坏仪器风。
+  static const Map<String, IconData> _emojiIcons = {
+    '🌌': Icons.auto_awesome_outlined,
+    '📚': Icons.menu_book_outlined,
+    '🎓': Icons.school_outlined,
+    '💼': Icons.work_outline,
+    '🏋️': Icons.fitness_center_outlined,
+    '🎨': Icons.palette_outlined,
+    '🎵': Icons.music_note_outlined,
+    '💻': Icons.laptop_mac_outlined,
+    '🔬': Icons.science_outlined,
+    '📝': Icons.edit_note_outlined,
+  };
 
   final List<String> _emojis = [
     '🌌',
@@ -44,11 +59,25 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.createSpacetime)),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(AppStrings.createSpacetime),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: DawnBackdrop(showTrails: false)),
+          Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                MediaQuery.of(context).padding.top + kToolbarHeight + 12,
+                16,
+                32,
+              ),
           children: [
             _buildEmojiSelector(),
             const SizedBox(height: 20),
@@ -66,10 +95,12 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
             const SizedBox(height: 24),
             _buildPreview(),
             const SizedBox(height: 24),
-            _buildCreateButton(),
-            const SizedBox(height: 32),
-          ],
+              _buildCreateButton(),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
+        ],
       ),
     );
   }
@@ -88,19 +119,28 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
             return GestureDetector(
               onTap: () => setState(() => _selectedEmoji = emoji),
               child: Container(
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary.withValues(alpha: 0.2)
-                      : AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected
-                      ? Border.all(color: AppColors.primary, width: 2)
-                      : null,
+                      ? AppColors.primary.withValues(alpha: 0.10)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.hairlineStrong,
+                    width: 1,
+                  ),
                 ),
                 child: Center(
-                  child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                  child: Icon(
+                    _emojiIcons[emoji] ?? Icons.circle_outlined,
+                    size: 19,
+                    color: isSelected
+                        ? AppColors.primaryLight
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
             );

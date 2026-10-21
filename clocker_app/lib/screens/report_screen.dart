@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../core/constants/app_colors.dart';
 import '../models/spacetime.dart';
+import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
 import '../core/utils/duration_formatter.dart';
+import '../widgets/dawn_backdrop.dart';
+import '../widgets/instrument_empty_state.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key});
@@ -14,16 +17,34 @@ class ReportScreen extends StatelessWidget {
     final spacetimeProvider = context.watch<SpacetimeProvider>();
 
     if (spacetimeProvider.activeSpacetime == null) {
-      return const Center(child: Text('请先创建自律时空'));
+      return const DawnEmptyPage(
+      appBarTitle: '时空报告',
+      title: '尚未创建自律时空',
+      hint: '有专注记录后，这里会出现一周的时空报告',
+    );
     }
 
     final st = spacetimeProvider.activeSpacetime!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('时空报告')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('时空报告'),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: DawnBackdrop(showTrails: false)),
+          SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              MediaQuery.of(context).padding.top + kToolbarHeight + 12,
+              16,
+              32,
+            ),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSummaryCards(context, st),
@@ -34,85 +55,125 @@ class ReportScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildTimeBalance(context, st, spacetimeProvider),
             const SizedBox(height: 20),
-            _buildInsights(context, st),
-          ],
-        ),
+                _buildInsights(context, st),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSummaryCards(BuildContext context, Spacetime st) {
-    return Row(
+    final netHours = (st.timeEarnedDays - st.timeLostDays) * 24;
+    final positive = netHours >= 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildSummaryCard(
-            context,
-            '总专注时长',
-            '${st.totalFocusHours.toStringAsFixed(1)}h',
-            Icons.timer,
-            AppColors.primary,
+        const Text(
+          '本 周 净 赚',
+          style: TextStyle(
+            color: AppColors.textHint,
+            fontSize: 10,
+            letterSpacing: 3.2,
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildSummaryCard(
-            context,
-            '完成任务值',
-            '${st.totalTaskValue.toStringAsFixed(1)}h',
-            Icons.check_circle,
-            AppColors.accent,
-          ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              '${positive ? '+' : '−'}${netHours.abs().toStringAsFixed(1)}',
+              style: TextStyle(
+                color: positive ? AppColors.textPrimary : AppColors.danger,
+                fontSize: 52,
+                fontWeight: FontWeight.w300,
+                height: 1,
+                letterSpacing: -2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(left: 6, bottom: 6),
+              child: Text(
+                'h',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 16,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildSummaryCard(
-            context,
-            '当前流速',
-            DurationFormatter.formatFlowRate(st.effectiveFlowRate),
-            Icons.speed,
-            st.effectiveFlowRate <= 1.0
-                ? AppColors.flowSlow
-                : AppColors.flowFast,
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.hairline),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildMetric(
+                  '总专注',
+                  '${st.totalFocusHours.toStringAsFixed(1)}h',
+                ),
+              ),
+              Container(width: 1, height: 26, color: AppColors.hairline),
+              Expanded(
+                child: _buildMetric(
+                  '任务值',
+                  '${st.totalTaskValue.toStringAsFixed(1)}h',
+                ),
+              ),
+              Container(width: 1, height: 26, color: AppColors.hairline),
+              Expanded(
+                child: _buildMetric(
+                  '当前流速',
+                  DurationFormatter.formatFlowRate(st.effectiveFlowRate),
+                  color: st.effectiveFlowRate <= 1.0
+                      ? AppColors.flowSlow
+                      : AppColors.flowFast,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryCard(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+  Widget _buildMetric(String label, String value, {Color? color}) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color ?? AppColors.textPrimary,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(color: AppColors.textHint, fontSize: 10),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textHint, fontSize: 10),
+        ),
+      ],
     );
+  }
+
+  /// γ = 1/√(1−(v/c)²)：引擎的 lorentzFactor 返回的是 1/γ（时间收缩因子），这里取倒数。
+  double _gammaOf(LorentzEngine engine, Spacetime st) {
+    final factor = engine.lorentzFactor(st.currentV);
+    if (factor <= 0.0001) return 999;
+    return 1 / factor;
   }
 
   Widget _buildFlowRateChart(
@@ -132,8 +193,9 @@ class ReportScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.hairline),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +215,14 @@ class ReportScreen extends StatelessWidget {
             height: 200,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: true, drawVerticalLine: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (_) => const FlLine(
+                    color: AppColors.hairline,
+                    strokeWidth: 1,
+                  ),
+                ),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -247,8 +316,9 @@ class ReportScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.hairline),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,8 +353,8 @@ class ReportScreen extends StatelessWidget {
                 AppColors.accent,
               ),
               _buildMetricItem(
-                '洛伦兹因子',
-                engine.lorentzFactor(st.currentV).toStringAsFixed(3),
+                '洛伦兹因子 γ',
+                _gammaOf(engine, st).toStringAsFixed(2),
                 AppColors.primary,
               ),
               _buildMetricItem(
@@ -363,8 +433,9 @@ class ReportScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.hairline),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,8 +580,9 @@ class ReportScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.hairline),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

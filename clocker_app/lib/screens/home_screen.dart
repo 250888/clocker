@@ -7,8 +7,8 @@ import '../providers/spacetime_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../providers/settings_provider.dart';
-import '../widgets/flow_rate_gauge.dart';
-import '../widgets/countdown_display.dart';
+import '../widgets/dawn_backdrop.dart';
+import '../widgets/dawn_dashboard_hero.dart';
 import '../widgets/task_card.dart';
 import '../widgets/achievement_badge.dart';
 import 'create_spacetime_screen.dart';
@@ -19,13 +19,20 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer<SpacetimeProvider>(
-        builder: (context, provider, _) {
-          if (provider.activeSpacetime == null) {
-            return _buildEmptyState(context);
-          }
-          return _buildDashboard(context, provider);
-        },
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: DawnBackdrop(showTrails: false)),
+          Consumer<SpacetimeProvider>(
+            builder: (context, provider, _) {
+              if (provider.activeSpacetime == null) {
+                return _buildEmptyState(context);
+              }
+              return _buildDashboard(context, provider);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -33,43 +40,56 @@ class HomeScreen extends StatelessWidget {
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 36),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text('🌌', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 24),
+            const Text(
+              'C L O C K E R',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 15,
+                letterSpacing: 6,
+              ),
+            ),
+            const SizedBox(height: 26),
+            Container(width: 40, height: 1, color: AppColors.hairline),
+            const SizedBox(height: 26),
+            const Text(
+              '尚未创建自律时空',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 10),
             Text(
               AppStrings.slogan,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.primaryLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppStrings.subtitle,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CreateSpacetimeScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text(AppStrings.createSpacetime),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
+            const SizedBox(height: 34),
+            SizedBox(
+              width: 220,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateSpacetimeScreen(),
+                    ),
+                  );
+                },
+                child: const Text(AppStrings.createSpacetime),
               ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              AppStrings.subtitle,
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -85,8 +105,10 @@ class HomeScreen extends StatelessWidget {
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: 96,
             pinned: true,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
               title: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -99,9 +121,6 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               titlePadding: const EdgeInsets.only(left: 16, bottom: 12),
-              background: Container(
-                decoration: BoxDecoration(gradient: AppColors.cosmicGradient),
-              ),
             ),
             actions: [
               IconButton(
@@ -136,24 +155,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FlowRateGauge(
-                    flowRate: st.currentFlowRate,
-                    v0: st.v0,
-                    vValue: st.currentV,
-                    c: st.c,
-                    disciplinePercentage: st.disciplinePercentage,
-                    isInFlowState: st.isInFlowState,
-                  ),
-                  const SizedBox(height: 16),
-                  CountdownDisplay(
-                    appDaysRemaining: st.effectiveAppDaysRemaining,
-                    realDaysRemaining: st.realDaysRemaining,
-                    flowRate: st.effectiveFlowRate,
-                    timeEarnedDays: st.timeEarnedDays,
-                    timeLostDays: st.timeLostDays,
-                    deadlineWarningDays: st.effectiveDeadlineWarningDays,
-                    isInFlowBonus: st.isInFlowBonus,
-                  ),
+                  DawnDashboardHero(spacetime: st),
                   const SizedBox(height: 24),
                   _buildLossWarning(context, st),
                   const SizedBox(height: 16),

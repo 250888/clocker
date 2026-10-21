@@ -5,6 +5,8 @@ import '../providers/spacetime_provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task.dart';
 import '../widgets/task_card.dart';
+import '../widgets/instrument_empty_state.dart';
+import '../widgets/dawn_backdrop.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key});
@@ -38,7 +40,11 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('任务星图'),
         bottom: TabBar(
           controller: _tabController,
@@ -49,12 +55,17 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          _buildPendingList(taskProvider),
-          _buildCompletedList(taskProvider),
-          _buildOverdueList(taskProvider),
+          const Positioned.fill(child: DawnBackdrop(showTrails: false)),
+          TabBarView(
+            controller: _tabController,
+            children: [
+              _buildPendingList(taskProvider),
+              _buildCompletedList(taskProvider),
+              _buildOverdueList(taskProvider),
+            ],
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -65,7 +76,11 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildNoSpacetime() {
-    return const Center(child: Text('请先创建自律时空'));
+    return const DawnEmptyPage(
+      appBarTitle: '任务星图',
+      title: '尚未创建自律时空',
+      hint: '创建后即可添加任务、记录专注',
+    );
   }
 
   Widget _buildPendingList(TaskProvider taskProvider) {
@@ -74,7 +89,12 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
       return _buildEmpty('暂无待办任务', '点击 + 添加新任务');
     }
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + kToolbarHeight + 52,
+        16,
+        24,
+      ),
       children: tasks
           .map((t) => TaskCard(
                 task: t,
@@ -91,7 +111,12 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
       return _buildEmpty('还没有完成的任务', '完成任务后将在这里显示');
     }
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + kToolbarHeight + 52,
+        16,
+        24,
+      ),
       children: taskProvider.completedTasks
           .map((t) => TaskCard(
                 task: t,
@@ -106,7 +131,12 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
       return _buildEmpty('没有逾期任务', '太棒了，继续保持！');
     }
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + kToolbarHeight + 52,
+        16,
+        24,
+      ),
       children: taskProvider.overdueTasks
           .map((t) => TaskCard(
                 task: t,
@@ -118,18 +148,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildEmpty(String title, String subtitle) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.inbox, size: 48, color: AppColors.textHint),
-          const SizedBox(height: 12),
-          Text(title, style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: TextStyle(color: AppColors.textHint, fontSize: 13)),
-        ],
-      ),
-    );
+    return InstrumentEmptyState(title: title, hint: subtitle);
   }
 
   void _showAddTaskDialog(BuildContext context, String spacetimeId) {

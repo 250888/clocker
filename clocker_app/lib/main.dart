@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/constants/app_theme.dart';
 import 'core/services/loading_screen_bridge.dart';
+import 'models/focus_session.dart';
+import 'models/task.dart';
 import 'providers/spacetime_provider.dart';
 import 'providers/task_provider.dart';
 import 'providers/focus_provider.dart';
@@ -87,6 +89,16 @@ class _AppEntryState extends State<_AppEntry> {
         await taskProvider.loadTasks(spacetimeProvider.activeSpacetime!.id);
       }
 
+      // 演示/截图模式：--dart-define=DEMO_SEED=true 时写入一份可展示的数据。
+      // 仅用于评审截图与录屏，不影响正常首次启动（默认 false）。
+      if (const bool.fromEnvironment('DEMO_SEED')) {
+        // 演示模式每次都重建数据，保证截图/录屏内容稳定可复现
+        for (final existing in [...spacetimeProvider.spacetimes]) {
+          await spacetimeProvider.deleteSpacetime(existing.id);
+        }
+        await _seedDemoData(spacetimeProvider, taskProvider, focusProvider);
+      }
+
       focusProvider.configure(
         enableWhiteNoise: settingsProvider.settings.enableWhiteNoise,
         enableScreenMonitoring:
@@ -98,6 +110,11 @@ class _AppEntryState extends State<_AppEntry> {
       if (mounted) {
         dismissHtmlLoadingScreen();
         setState(() => _initialized = true);
+        if (const bool.fromEnvironment('OPEN_CREATE')) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushNamed(context, '/create');
+          });
+        }
       }
     } catch (e) {
       dismissHtmlLoadingScreen();
@@ -105,6 +122,57 @@ class _AppEntryState extends State<_AppEntry> {
         setState(() => _error = e.toString());
       }
     }
+  }
+
+  /// 写入一份用于评审展示的演示数据（时空 + 任务 + 专注记录）。
+  Future<void> _seedDemoData(
+    SpacetimeProvider spacetime,
+    TaskProvider tasks,
+    FocusProvider focus,
+  ) async {
+    final st = await spacetime.createSpacetime(
+      name: '考研冲刺',
+      deadline: DateTime.now().add(const Duration(days: 18)),
+      emoji: '🎓',
+      advanceDays: 14,
+    );
+    // v ≈ 7.6 / c 8.0 → γ ≈ 3.2，流速 ≈ 0.62×（真正的「钟慢」演示态）
+    await spacetime.addFocusHours(5.0);
+    await spacetime.addTaskValue(2.8);
+    await spacetime.addScreenPenalty(0.2);
+
+    await tasks.loadTasks(st.id);
+    await tasks.createTask(
+      spacetimeId: st.id,
+      title: '高数 · 第三章习题',
+      vValueWeight: 2.0,
+      priority: TaskPriority.high,
+      dueDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    await tasks.createTask(
+      spacetimeId: st.id,
+      title: '英语单词 List 12',
+      vValueWeight: 1.0,
+      priority: TaskPriority.medium,
+    );
+    final report = await tasks.createTask(
+      spacetimeId: st.id,
+      title: '物理实验报告',
+      vValueWeight: 1.5,
+      priority: TaskPriority.urgent,
+      dueDate: DateTime.now().add(const Duration(days: 2)),
+    );
+    await tasks.completeTask(report);
+    await tasks.createTask(
+      spacetimeId: st.id,
+      title: '论文文献精读',
+      vValueWeight: 1.2,
+      priority: TaskPriority.low,
+      dueDate: DateTime.now().add(const Duration(days: 5)),
+    );
+
+    focus.setTargetDuration(const Duration(minutes: 25));
+    focus.setMode(FocusMode.deepFocus);
   }
 
   @override

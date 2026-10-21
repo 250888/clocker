@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../models/task.dart';
 
+/// 任务行（仪器风）：勾选圈 + 优先级点 + 标题 + 等宽元信息 + 删除。
+///
+/// 用 1px 发丝线分隔，不用卡片堆叠——列表页保持密度与秩序。
 class TaskCard extends StatelessWidget {
-  final Task task;
-  final VoidCallback? onTap;
-  final VoidCallback? onComplete;
-  final VoidCallback? onDelete;
-
   const TaskCard({
     super.key,
     required this.task,
@@ -16,7 +15,12 @@ class TaskCard extends StatelessWidget {
     this.onDelete,
   });
 
-  Color get priorityColor {
+  final Task task;
+  final VoidCallback? onTap;
+  final VoidCallback? onComplete;
+  final VoidCallback? onDelete;
+
+  Color get _priorityColor {
     switch (task.priority) {
       case TaskPriority.urgent:
         return AppColors.danger;
@@ -29,7 +33,7 @@ class TaskCard extends StatelessWidget {
     }
   }
 
-  String get priorityLabel {
+  String get _priorityLabel {
     switch (task.priority) {
       case TaskPriority.urgent:
         return '紧急';
@@ -42,131 +46,141 @@ class TaskCard extends StatelessWidget {
     }
   }
 
+  String get _meta {
+    final parts = <String>['v ${task.vValueWeight.toStringAsFixed(1)}h'];
+    if (task.subtasks.isNotEmpty) {
+      parts.add('${task.completedSubtasks.length}/${task.subtasks.length} 子任务');
+    }
+    if (task.dueDate != null) {
+      final due = task.dueDate!;
+      parts.add('${due.month}/${due.day} 截止');
+    }
+    return parts.join('  ·  ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: task.isOverdue
-            ? Border.all(color: AppColors.danger.withValues(alpha: 0.5))
-            : null,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: onComplete,
+    final completed = task.isCompleted;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: AppColors.hairline, width: 1),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: onComplete,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12, top: 2, bottom: 2),
                 child: Container(
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: task.isCompleted
-                        ? AppColors.success
-                        : Colors.transparent,
+                    color: completed ? AppColors.primary : Colors.transparent,
                     border: Border.all(
-                      color: task.isCompleted
-                          ? AppColors.success
-                          : AppColors.textHint,
-                      width: 2,
+                      color: completed
+                          ? AppColors.primary
+                          : AppColors.hairlineStrong,
+                      width: 1.2,
                     ),
                   ),
-                  child: task.isCompleted
-                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  child: completed
+                      ? const Icon(
+                          Icons.check,
+                          size: 13,
+                          color: Color(0xFF0E0F12),
+                        )
                       : null,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            task.title,
-                            style: TextStyle(
-                              color: task.isCompleted
-                                  ? AppColors.textHint
-                                  : AppColors.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              decoration: task.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: priorityColor.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            priorityLabel,
-                            style: TextStyle(
-                              color: priorityColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+            ),
+            Container(
+              width: 5,
+              height: 5,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: completed ? AppColors.hairlineStrong : _priorityColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: completed
+                          ? AppColors.textHint
+                          : AppColors.textPrimary,
+                      fontSize: 13.5,
+                      height: 1.3,
+                      decoration:
+                          completed ? TextDecoration.lineThrough : null,
+                      decorationColor: AppColors.textHint,
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          'v值: ${task.vValueWeight.toStringAsFixed(1)}h',
-                          style: TextStyle(
-                            color: AppColors.accent,
-                            fontSize: 11,
-                          ),
-                        ),
-                        if (task.subtasks.isNotEmpty) ...[
-                          const SizedBox(width: 12),
-                          Text(
-                            '${task.completedSubtasks.length}/${task.subtasks.length}',
-                            style: TextStyle(
-                              color: AppColors.textHint,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                        if (task.isOverdue) ...[
-                          const SizedBox(width: 12),
-                          Text(
-                            '已逾期',
-                            style: TextStyle(
-                              color: AppColors.danger,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _meta,
+                    style: const TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: 10,
+                      letterSpacing: 0.2,
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            if (task.isOverdue && !completed)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  '逾期',
+                  style: TextStyle(
+                    color: AppColors.danger,
+                    fontSize: 10,
+                    letterSpacing: 1,
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  _priorityLabel,
+                  style: TextStyle(
+                    color: completed ? AppColors.textHint : _priorityColor,
+                    fontSize: 10,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
-              if (onDelete != null)
-                IconButton(
-                  icon: Icon(Icons.close, size: 16, color: AppColors.textHint),
-                  onPressed: onDelete,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+            if (onDelete != null)
+              GestureDetector(
+                onTap: onDelete,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 10, top: 4, bottom: 4),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: AppColors.textHint,
+                  ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

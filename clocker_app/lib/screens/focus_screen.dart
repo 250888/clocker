@@ -5,7 +5,9 @@ import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
 import '../providers/focus_provider.dart';
 import '../models/focus_session.dart';
-import '../widgets/pomodoro_timer.dart';
+import '../widgets/dawn_backdrop.dart';
+import '../widgets/dawn_timer.dart';
+import '../widgets/instrument_empty_state.dart';
 
 class FocusScreen extends StatefulWidget {
   const FocusScreen({super.key});
@@ -86,13 +88,27 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('专注时空')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('专注时空'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: DawnBackdrop()),
+          SingleChildScrollView(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+              left: 16,
+              right: 16,
+              bottom: 24,
+            ),
+            child: Column(
           children: [
             RepaintBoundary(
-              child: PomodoroTimer(
+              child: DawnTimer(
                 elapsed: focusProvider.elapsed,
                 target: focusProvider.targetDuration,
                 isRunning: focusProvider.isRunning,
@@ -156,26 +172,20 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
             const SizedBox(height: 24),
             _buildRecentSessions(focusProvider, spacetimeProvider),
           ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildNoSpacetime(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('⏳', style: TextStyle(fontSize: 48)),
-          const SizedBox(height: 16),
-          Text('请先创建自律时空', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pushNamed(context, '/create'),
-            child: const Text('创建时空'),
-          ),
-        ],
-      ),
+    return DawnEmptyPage(
+      appBarTitle: '专注时空',
+      title: '尚未创建自律时空',
+      hint: '先建立一个时空仓，专注才会开始计时',
+      actionLabel: '创建时空',
+      onAction: () => Navigator.pushNamed(context, '/create'),
     );
   }
 

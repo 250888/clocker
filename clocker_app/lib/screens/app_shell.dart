@@ -4,6 +4,7 @@ import 'home_screen.dart';
 import 'focus_screen.dart';
 import 'task_screen.dart';
 import 'report_screen.dart';
+import 'settings_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -13,13 +14,18 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
+  /// 默认首页；截图/演示时可用 `--dart-define=START_INDEX=4` 直接启动到某一页。
+  int _currentIndex = const int.fromEnvironment(
+    'START_INDEX',
+    defaultValue: 0,
+  ).clamp(0, 4);
 
   final List<Widget> _screens = const [
     HomeScreen(),
     FocusScreen(),
     TaskScreen(),
     ReportScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -32,19 +38,15 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          border: Border(
+            top: BorderSide(color: AppColors.hairline, width: 1),
+          ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
@@ -69,6 +71,11 @@ class _AppShellState extends State<AppShell> {
                   icon: Icon(Icons.bar_chart_outlined),
                   activeIcon: Icon(Icons.bar_chart),
                   label: '报告',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.tune_outlined),
+                  activeIcon: Icon(Icons.tune),
+                  label: '规则',
                 ),
               ],
             ),
