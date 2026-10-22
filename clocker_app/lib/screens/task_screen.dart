@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/spacetime_provider.dart';
+import '../providers/achievement_provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task.dart';
 import '../widgets/task_card.dart';
@@ -98,7 +99,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
       children: tasks
           .map((t) => TaskCard(
                 task: t,
-                onComplete: () => taskProvider.completeTask(t),
+                onComplete: () => _completeTask(context, taskProvider, t),
                 onTap: () => _showTaskDetail(context, t, taskProvider),
                 onDelete: () => _confirmDelete(context, taskProvider, t.id),
               ))
@@ -140,7 +141,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
       children: taskProvider.overdueTasks
           .map((t) => TaskCard(
                 task: t,
-                onComplete: () => taskProvider.completeTask(t),
+                onComplete: () => _completeTask(context, taskProvider, t),
                 onDelete: () => _confirmDelete(context, taskProvider, t.id),
               ))
           .toList(),
@@ -449,5 +450,21 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
         ],
       ),
     );
+  }
+
+  /// 完成任务后结算成就（成就由真实任务/专注数据聚合判定）。
+  Future<void> _completeTask(
+    BuildContext context,
+    TaskProvider tasks,
+    Task task,
+  ) async {
+    await tasks.completeTask(task);
+    if (!context.mounted) return;
+    final spacetimes = context.read<SpacetimeProvider>();
+    // 核心闭环：任务价值计入自律速度 v（否则报告任务值恒为 0、回溯永不增长）
+    final id = spacetimes.activeSpacetime?.id;
+    await spacetimes.addTaskValue(task.vValueWeight);
+    if (!context.mounted || id == null) return;
+    await context.read<AchievementProvider>().checkNow(id);
   }
 }

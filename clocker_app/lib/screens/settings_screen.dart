@@ -154,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'CLOCKER · 钟慢自律',
+            'CLOCKER · 钟慢',
             style: TextStyle(color: AppColors.textPrimary, fontSize: 13.5),
           ),
           const SizedBox(height: 5),

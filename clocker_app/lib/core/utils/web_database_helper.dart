@@ -212,7 +212,29 @@ class WebDatabaseHelper implements DatabaseHelperInterface {
         list.add(jsonEncode(a.toMap()));
       }
       await _setList(_achievementsKey, list);
+      return;
     }
+
+    // 数据自愈：老版本写入的成就行字段可能缺失或文案过期，
+    // 按「名称」对齐到当前默认值（保留已解锁状态与解锁时间）。
+    final byName = <String, Map<String, dynamic>>{};
+    for (final s in list) {
+      final m = Map<String, dynamic>.from(jsonDecode(s) as Map);
+      byName[m['name'] as String] = m;
+    }
+    for (final a in Achievement.defaultAchievements()) {
+      final merged = a.toMap();
+      final old = byName[a.name];
+      if (old != null) {
+        merged['isUnlocked'] = old['isUnlocked'] ?? 0;
+        merged['unlockedAt'] = old['unlockedAt'];
+      }
+      byName[a.name] = merged;
+    }
+    await _setList(
+      _achievementsKey,
+      byName.values.map((m) => jsonEncode(m)).toList(),
+    );
   }
 
   @override

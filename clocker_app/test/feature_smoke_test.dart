@@ -93,6 +93,13 @@ void main() {
     expect(tasks.totalCompletedVValue, greaterThan(0),
         reason: '完成的任务应累计任务 v 值');
 
+    // 核心闭环：完成任务必须把价值计入时空的 totalTaskValue（否则报告恒 0）
+    // 注意：effectiveVValue 对未完成任务返回 0，结算用原始权重
+    await sp.addTaskValue(task.vValueWeight);
+    await sp.loadSpacetimes();
+    expect(sp.activeSpacetime!.totalTaskValue, greaterThan(0),
+        reason: '任务价值应计入时空 totalTaskValue');
+
     // 持久化
     final reloaded = TaskProvider();
     await reloaded.loadTasks(st.id);

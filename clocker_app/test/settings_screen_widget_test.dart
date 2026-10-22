@@ -50,6 +50,6 @@ void main() {
     expect(find.text('提 醒'), findsOneWidget);
     expect(find.text('通知提醒'), findsOneWidget);
     expect(find.text('关 于'), findsOneWidget);
-    expect(find.text('CLOCKER · 钟慢自律'), findsOneWidget);
+    expect(find.text('CLOCKER · 钟慢'), findsOneWidget);
   });
 }

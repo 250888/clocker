@@ -66,11 +66,37 @@ class AchievementBadge extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: unlocked ? AppColors.textPrimary : AppColors.textHint,
+                color: unlocked ? AppColors.textPrimary : AppColors.textSecondary,
                 fontSize: 9.5,
                 letterSpacing: 0.3,
               ),
             ),
+            if (!unlocked) ...[
+              const SizedBox(height: 3),
+              Text(
+                achievement.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textHint,
+                  fontSize: 7.5,
+                  height: 1.35,
+                ),
+              ),
+            ] else if (achievement.reward != null) ...[
+              const SizedBox(height: 3),
+              Text(
+                achievement.reward!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 7.5,
+                ),
+              ),
+            ],
           ],
         ),
       ),

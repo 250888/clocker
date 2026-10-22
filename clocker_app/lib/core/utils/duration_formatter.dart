@@ -61,7 +61,7 @@ class DurationFormatter {
   }
 
   static String formatFlowRate(double rate) {
-    return '${rate.toStringAsFixed(2)}x';
+    return '${rate.toStringAsFixed(2)}×';
   }
 
   static String formatPercentage(double value) {

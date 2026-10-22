@@ -121,6 +121,12 @@ class DawnDashboardHero extends StatelessWidget {
               value: '−${_fmtDays(spacetime.timeLostDays)} 天',
               color: AppColors.danger,
             ),
+            const SizedBox(width: 18),
+            _Delta(
+              label: '已抢回',
+              value: '${_fmtDays(spacetime.daysRecaptured)} 天',
+              color: AppColors.primary,
+            ),
           ],
         ),
         const SizedBox(height: 18),
@@ -147,7 +153,8 @@ class DawnDashboardHero extends StatelessWidget {
                   const Spacer(),
                   if (frozen)
                     _StatusChip(
-                      text: '冻结中 ${spacetime.freezeRemaining.inHours}h',
+                      text: '冻结中 ${spacetime.freezeRemaining.inHours}h'
+                          '${spacetime.canFreeze ? '' : ' · 冷却 ${spacetime.freezeCooldownRemaining.inDays + 1}d'}',
                       color: AppColors.primaryLight,
                     )
                   else if (inFlow)

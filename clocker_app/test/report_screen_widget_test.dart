@@ -45,7 +45,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     // 主视觉
-    expect(find.text('本 周 净 赚'), findsOneWidget);
+    expect(find.text('累 计 净 赚'), findsOneWidget, reason: '数值是累计口径，标签必须一致');
     // 三项指标（数值来自真实 provider 数据）
     expect(find.text('42.0h'), findsOneWidget);
     expect(find.text('18.0h'), findsOneWidget);

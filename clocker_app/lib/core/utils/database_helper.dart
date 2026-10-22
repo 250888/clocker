@@ -325,6 +325,35 @@ class DatabaseHelper implements DatabaseHelperInterface {
         await db.insert('achievements', a.toMap());
       }
     }
+
+    // 数据自愈：老版本的成就行可能缺新字段或文案过期，
+    // 按「名称」对齐到当前默认值（保留已解锁状态与解锁时间）。
+    final defaults = Achievement.defaultAchievements();
+    for (final a in defaults) {
+      final existing = await db.query(
+        'achievements',
+        where: 'name = ?',
+        whereArgs: [a.name],
+        limit: 1,
+      );
+      if (existing.isEmpty) {
+        await db.insert('achievements', a.toMap());
+      } else {
+        await db.update(
+          'achievements',
+          {
+            'description': a.description,
+            'reward': a.reward,
+            'tier': a.tier.index,
+            'category': a.category.index,
+            'icon': a.icon,
+            'requiredValue': a.requiredValue,
+          },
+          where: 'name = ?',
+          whereArgs: [a.name],
+        );
+      }
+    }
   }
 
   @override

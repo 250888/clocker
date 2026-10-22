@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_icons.dart';
 import '../core/constants/app_strings.dart';
 import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
@@ -22,20 +23,6 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
   int _advanceDays = 14;
   FlowMode _flowMode = FlowMode.relativistic;
   String _selectedEmoji = '🌌';
-
-  /// 展示用：把历史 emoji 字符串映射为线性图标，避免彩色 emoji 破坏仪器风。
-  static const Map<String, IconData> _emojiIcons = {
-    '🌌': Icons.auto_awesome_outlined,
-    '📚': Icons.menu_book_outlined,
-    '🎓': Icons.school_outlined,
-    '💼': Icons.work_outline,
-    '🏋️': Icons.fitness_center_outlined,
-    '🎨': Icons.palette_outlined,
-    '🎵': Icons.music_note_outlined,
-    '💻': Icons.laptop_mac_outlined,
-    '🔬': Icons.science_outlined,
-    '📝': Icons.edit_note_outlined,
-  };
 
   final List<String> _emojis = [
     '🌌',
@@ -135,7 +122,7 @@ class _CreateSpacetimeScreenState extends State<CreateSpacetimeScreen> {
                 ),
                 child: Center(
                   child: Icon(
-                    _emojiIcons[emoji] ?? Icons.circle_outlined,
+                    AppIcons.of(emoji),
                     size: 19,
                     color: isSelected
                         ? AppColors.primaryLight

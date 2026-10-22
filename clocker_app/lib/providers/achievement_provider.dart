@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/achievement.dart';
+import '../models/focus_session.dart';
+import '../models/task.dart';
 import '../core/utils/database_factory.dart';
 
 class AchievementProvider extends ChangeNotifier {
@@ -90,6 +92,56 @@ class AchievementProvider extends ChangeNotifier {
 
     if (anyUnlocked) {
       notifyListeners();
+    }
+  }
+
+  /// 从真实数据计算成就指标并解锁（专注结束 / 任务完成 / 打开报告页时调用）。
+  Future<void> checkNow(String spacetimeId) async {
+    try {
+      if (_achievements.isEmpty) {
+        await _db.initAchievements();
+        _achievements = await _db.getAllAchievements();
+      }
+
+      final sessions = await _db.getFocusSessionsForSpacetime(spacetimeId);
+      final tasks = await _db.getTasksForSpacetime(spacetimeId);
+      final st = await _db.getSpacetime(spacetimeId);
+
+      final done =
+          sessions.where((s) => s.status == FocusStatus.completed).toList();
+      final totalSessions = done.length;
+      final totalHours = done.fold<double>(
+          0, (a, s) => a + s.actualDuration.inMinutes / 60.0);
+      final tasksDone =
+          tasks.where((t) => t.status == TaskStatus.completed).length;
+      final hasFlow = done.any((s) => s.wasFlowState);
+
+      // 连续自律天数：按「有完成专注」的日期计算
+      final activeDays = done
+          .map((s) => DateTime(s.startTime.year, s.startTime.month, s.startTime.day))
+          .toSet();
+      final today = DateTime.now();
+      var cursor = DateTime(today.year, today.month, today.day);
+      if (!activeDays.contains(cursor)) {
+        cursor = cursor.subtract(const Duration(days: 1));
+      }
+      var streak = 0;
+      while (activeDays.contains(cursor)) {
+        streak += 1;
+        cursor = cursor.subtract(const Duration(days: 1));
+      }
+
+      await checkAndUnlockAchievements(
+        totalFocusSessions: totalSessions,
+        totalFocusHours: totalHours,
+        totalTasksCompleted: tasksDone,
+        currentStreak: streak,
+        maxDisciplinePercentage: st?.disciplinePercentage ?? 0,
+        hasFlowState: hasFlow,
+        totalDaysEarned: st?.timeEarnedDays ?? 0,
+      );
+    } catch (e) {
+      debugPrint('Achievement check error: $e');
     }
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_icons.dart';
 import '../core/constants/app_strings.dart';
 import '../models/spacetime.dart';
 import '../providers/spacetime_provider.dart';
+import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../providers/settings_provider.dart';
@@ -113,10 +115,8 @@ class HomeScreen extends StatelessWidget {
               title: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (st.emoji != null) ...[
-                    Text(st.emoji!, style: const TextStyle(fontSize: 18)),
-                    const SizedBox(width: 6),
-                  ],
+                  Icon(AppIcons.of(st.emoji), size: 18, color: AppColors.primary),
+                  const SizedBox(width: 8),
                   Text(st.name, style: const TextStyle(fontSize: 16)),
                 ],
               ),
@@ -251,7 +251,7 @@ class HomeScreen extends StatelessWidget {
             ...miniTasks.map(
               (task) => TaskCard(
                 task: task,
-                onComplete: () => taskProvider.completeTask(task),
+                onComplete: () => _completeMiniTask(context, taskProvider, task),
               ),
             ),
           ],
@@ -662,5 +662,20 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// 首页迷你待办完成：与任务页同一结算路径（任务价值 → 自律速度 v）。
+  Future<void> _completeMiniTask(
+    BuildContext context,
+    TaskProvider tasks,
+    Task task,
+  ) async {
+    await tasks.completeTask(task);
+    if (!context.mounted) return;
+    final spacetimes = context.read<SpacetimeProvider>();
+    final id = spacetimes.activeSpacetime?.id;
+    await spacetimes.addTaskValue(task.vValueWeight);
+    if (!context.mounted || id == null) return;
+    await context.read<AchievementProvider>().checkNow(id);
   }
 }

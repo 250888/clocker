@@ -75,7 +75,7 @@ class ReportScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '本 周 净 赚',
+          '累 计 净 赚',
           style: TextStyle(
             color: AppColors.textHint,
             fontSize: 10,
@@ -175,8 +175,9 @@ class ReportScreen extends StatelessWidget {
   /// γ = 1/√(1−(v/c)²)：引擎的 lorentzFactor 返回的是 1/γ（时间收缩因子），这里取倒数。
   double _gammaOf(LorentzEngine engine, Spacetime st) {
     final factor = engine.lorentzFactor(st.currentV);
-    if (factor <= 0.0001) return 999;
-    return 1 / factor;
+    if (factor <= 0.0001) return 20;
+    final gamma = 1 / factor;
+    return gamma > 20 ? 20 : gamma;
   }
 
   Widget _buildFlowRateChart(

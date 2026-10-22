@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/engine/lorentz_engine.dart';
 import '../providers/spacetime_provider.dart';
+import '../providers/achievement_provider.dart';
 import '../providers/focus_provider.dart';
 import '../models/focus_session.dart';
 import '../widgets/dawn_backdrop.dart';
@@ -553,9 +554,12 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final rawFlowRate = engine != null
         ? engine.calculateFlowRate(clampedV)
         : 1.0;
-    final newFlowRate = engine != null && engine.isInFlowState(clampedV)
-        ? engine.flowStateBonus(clampedV)
-        : rawFlowRate;
+    // 与仪表盘同口径：冻结期一律 1.0×，否则按心流加成
+    final newFlowRate = st.isFrozen
+        ? 1.0
+        : (engine != null && engine.isInFlowState(clampedV)
+            ? engine.flowStateBonus(clampedV)
+            : rawFlowRate);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1213,6 +1217,14 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     SpacetimeProvider spacetimeProvider,
   ) async {
     await focusProvider.completeFocus();
+
+    // 专注结束即结算成就
+    if (mounted) {
+      final activeId = spacetimeProvider.activeSpacetime?.id;
+      if (activeId != null) {
+        await context.read<AchievementProvider>().checkNow(activeId);
+      }
+    }
 
     if (focusProvider.currentSession != null) {
       final session = focusProvider.currentSession!;

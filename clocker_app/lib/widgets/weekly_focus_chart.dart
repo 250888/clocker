@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/utils/database_factory.dart';
+import '../providers/achievement_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/focus_session.dart';
@@ -153,7 +155,12 @@ class _WeeklyFocusPanelState extends State<WeeklyFocusPanel> {
     try {
       final db = DatabaseFactory.create();
       final list = await db.getFocusSessionsForSpacetime(widget.spacetimeId);
-      if (mounted) setState(() => _sessions = list);
+      if (mounted) {
+        setState(() => _sessions = list);
+        // 打开报告页时追溯结算成就（覆盖历史数据）
+        // ignore: use_build_context_synchronously
+        await context.read<AchievementProvider>().checkNow(widget.spacetimeId);
+      }
     } catch (_) {
       if (mounted) setState(() => _sessions = const []);
     }

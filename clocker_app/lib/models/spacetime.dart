@@ -143,6 +143,20 @@ class Spacetime {
     return realDaysRemaining.toDouble() - effectiveDays;
   }
 
+  /// 距离下一次可冻结还剩多久（0 表示可用）。
+  Duration get freezeCooldownRemaining {
+    final t = lastFreezeTime;
+    if (t == null) return Duration.zero;
+    final left = freezeCooldown - DateTime.now().difference(t);
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  /// 已从截止日抢回的天数（现实剩余 − APP 内剩余，正数表示抢回）。
+  double get daysRecaptured =>
+      effectiveAppDaysRemaining.isFinite
+          ? effectiveAppDaysRemaining - realDaysRemaining
+          : 0.0;
+
   bool get canFreeze {
     final t = lastFreezeTime;
     if (t == null) return true;

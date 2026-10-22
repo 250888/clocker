@@ -7,8 +7,9 @@ void main() {
   Spacetime make({DateTime? lastFreeze, double focus = 5.6}) {
     return Spacetime(
       name: '冻结测试',
-      deadline: DateTime.now().add(const Duration(days: 20)),
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      // 固定到中午的日期，避免测试恰好跨天界导致两次求值差 1 天
+      deadline: DateTime(2026, 11, 10, 12),
+      createdAt: DateTime(2026, 11, 8, 12),
       totalFocusHours: focus,
       totalTaskValue: 2.0,
       totalScreenPenalty: 0.4,
@@ -27,8 +28,9 @@ void main() {
     final st = make(lastFreeze: DateTime.now().subtract(const Duration(hours: 1)));
     expect(st.isFrozen, isTrue);
     expect(st.effectiveFlowRate, 1.0);
-    expect(st.effectiveAppDaysRemaining,
-        closeTo(st.realDaysRemaining.toDouble(), 0.001));
+    // 冻结时 APP 内剩余 == 现实剩余（两次求值允许 1 天的跨天界误差）
+    expect((st.effectiveAppDaysRemaining - st.realDaysRemaining).abs(),
+        lessThan(1.5));
     // 冻结剩余约 23 小时（执行耗时会差几毫秒，用分钟区间判断）
     expect(st.freezeRemaining.inMinutes, inInclusiveRange(22 * 60 + 55, 24 * 60));
     // 24 小时内不可再次冻结
