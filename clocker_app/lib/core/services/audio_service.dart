@@ -415,6 +415,21 @@ class AudioService {
       await stopWhiteNoise();
       final ok = await platformPlayWhiteNoise(soundId, volume);
       if (!ok) {
+        // 优先播放真实环境录音资产（CC0，无缝循环 WAV）；缺失（如咖啡馆）则程序合成
+        var usedAsset = false;
+        try {
+          _ambientPlayer = AudioPlayer();
+          await _ambientPlayer!.setReleaseMode(ReleaseMode.loop);
+          await _ambientPlayer!.setVolume(volume);
+          await _ambientPlayer!.play(AssetSource('audio/$soundId.wav'));
+          usedAsset = true;
+          debugPrint('Playing ambience asset: $soundId');
+        } catch (e) {
+          debugPrint('Ambience asset miss, synthesize: $e');
+          await _ambientPlayer?.dispose();
+          _ambientPlayer = null;
+        }
+        if (!usedAsset) {
         _ambientPlayer = AudioPlayer();
         final int durationSec = kIsWeb ? 4 : 30;
         final Uint8List pcmData;
@@ -443,8 +458,9 @@ class AudioService {
         } else {
           await _ambientPlayer!.play(BytesSource(wavData));
         }
+        }
       }
-      debugPrint('Playing white noise: $soundId (native=${!ok})');
+      debugPrint('Playing white noise: $soundId (assetOrNative=${!ok})');
     } catch (e) {
       debugPrint('Audio play error: $e');
     }

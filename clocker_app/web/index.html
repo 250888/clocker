@@ -244,20 +244,46 @@
       return buf;
     }
 
+    var _noiseToken=0, _noiseCache={};
+    function _startSynth(ctx,sid,vol){
+      var buf=_buildNoiseBuffer(ctx, sid, 8);
+      _ns=ctx.createBufferSource(); _ns.buffer=buf; _ns.loop=true;
+      _ng=ctx.createGain(); _ng.gain.value=vol;
+      _ns.connect(_ng); _ng.connect(ctx.destination); _ns.start(0);
+      _ns.__synth=true;
+    }
     window.startWhiteNoise=function(sid,vol){
       try{
         var ctx=_getAC();
         if(_ns){try{_ns.stop();}catch(e){}_ns=null;}
         if(_ng){try{_ng.disconnect();}catch(e){}_ng=null;}
-        var buf=_buildNoiseBuffer(ctx, sid, 8);
-        _ns=ctx.createBufferSource(); _ns.buffer=buf; _ns.loop=true;
-        _ng=ctx.createGain(); _ng.gain.value=vol;
-        _ns.connect(_ng); _ng.connect(ctx.destination); _ns.start(0);
+        var token=++_noiseToken;
+        // 优先真实环境录音资产（CC0 无缝循环 WAV）；异步取不到则程序合成降级
+        var cached=_noiseCache[sid];
+        if(cached){ _ns=ctx.createBufferSource(); _ns.buffer=cached; _ns.loop=true;
+          _ng=ctx.createGain(); _ng.gain.value=vol;
+          _ns.connect(_ng); _ng.connect(ctx.destination); _ns.start(0); return true; }
+        fetch('assets/assets/audio/'+sid+'.wav').then(function(r){
+          if(!r.ok)throw new Error('asset '+r.status);
+          return r.arrayBuffer();
+        }).then(function(ab){ return ctx.decodeAudioData(ab); }).then(function(buf){
+          if(token!==_noiseToken)return;   // 已切换/停止
+          _noiseCache[sid]=buf;
+          if(_ns){try{_ns.stop();}catch(e){}_ns=null;}
+          if(_ng){try{_ng.disconnect();}catch(e){}_ng=null;}
+          _ns=ctx.createBufferSource(); _ns.buffer=buf; _ns.loop=true;
+          _ng=ctx.createGain(); _ng.gain.value=vol;
+          _ns.connect(_ng); _ng.connect(ctx.destination); _ns.start(0);
+        })['catch'](function(){
+          if(token!==_noiseToken)return;
+          try{ _startSynth(ctx,sid,vol); }catch(e){console.warn('Noise synth:',e);}
+        });
         return true;
       }catch(e){console.warn('Noise:',e);return false;}
     };
 
     window.stopWhiteNoise=function(){
+      _noiseToken++;   // 作废待取回的资产加载，防止停了又自动播
       try{ if(_ns){_ns.stop();_ns=null;} if(_ng){_ng.disconnect();_ng=null;} }catch(e){}
     };
     window.setNoiseVolume=function(v){ if(_ng){try{_ng.gain.value=v;}catch(e){}} };
