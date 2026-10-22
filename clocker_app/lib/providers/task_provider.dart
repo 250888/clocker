@@ -9,6 +9,22 @@ class TaskProvider extends ChangeNotifier {
   List<Task> get tasks => _tasks;
   List<Task> get pendingTasks =>
       _tasks.where((t) => t.status == TaskStatus.pending).toList();
+  /// 活跃任务排序：优先级高的在前；同优先级按截止日期升序（无截止排最后）。
+  List<Task> get sortedActiveTasks {
+    final list = [...inProgressTasks, ...pendingTasks];
+    list.sort((a, b) {
+      final byPriority = b.priority.index.compareTo(a.priority.index);
+      if (byPriority != 0) return byPriority;
+      final aDue = a.dueDate;
+      final bDue = b.dueDate;
+      if (aDue == null && bDue == null) return 0;
+      if (aDue == null) return 1;
+      if (bDue == null) return -1;
+      return aDue.compareTo(bDue);
+    });
+    return list;
+  }
+
   List<Task> get inProgressTasks =>
       _tasks.where((t) => t.status == TaskStatus.inProgress).toList();
   List<Task> get completedTasks =>

@@ -85,7 +85,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildPendingList(TaskProvider taskProvider) {
-    final tasks = [...taskProvider.inProgressTasks, ...taskProvider.pendingTasks];
+    final tasks = taskProvider.sortedActiveTasks;
     if (tasks.isEmpty) {
       return _buildEmpty('暂无待办任务', '点击 + 添加新任务');
     }
@@ -158,6 +158,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
     double vValueWeight = 1.0;
     TaskPriority priority = TaskPriority.medium;
     List<String> subtasks = [];
+    DateTime? dueDate;
 
     showDialog(
       context: context,
@@ -239,6 +240,48 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
                     ],
                   ),
                   const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: dueDate ?? DateTime.now().add(const Duration(days: 3)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                        builder: (_, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.dark(
+                              primary: AppColors.primary,
+                              surface: AppColors.surface,
+                            ),
+                          ),
+                          child: child!,
+                        ),
+                      );
+                      if (picked != null) setDialogState(() => dueDate = picked);
+                    },
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: '截止日期（可选）',
+                        prefixIcon: const Icon(Icons.event),
+                        suffixIcon: dueDate != null
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 16),
+                                onPressed: () => setDialogState(() => dueDate = null),
+                              )
+                            : null,
+                      ),
+                      child: Text(
+                        dueDate == null
+                            ? '未设置'
+                            : '${dueDate!.year}年${dueDate!.month}月${dueDate!.day}日',
+                        style: TextStyle(
+                          color: dueDate == null ? AppColors.textHint : AppColors.textPrimary,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   _buildSubtaskInput(subtasks, (list) {
                     setDialogState(() => subtasks = list);
                   }),
@@ -260,6 +303,7 @@ class _TaskScreenState extends State<TaskScreen> with SingleTickerProviderStateM
                       description: descController.text.trim().isEmpty ? null : descController.text.trim(),
                       vValueWeight: vValueWeight,
                       priority: priority,
+                      dueDate: dueDate,
                       subtasks: subtasks,
                     );
                 Navigator.pop(context);
