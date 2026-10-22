@@ -8,6 +8,7 @@ import '../providers/spacetime_provider.dart';
 import '../core/utils/duration_formatter.dart';
 import '../widgets/dawn_backdrop.dart';
 import '../widgets/instrument_empty_state.dart';
+import '../widgets/weekly_focus_chart.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key});
@@ -48,6 +49,8 @@ class ReportScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSummaryCards(context, st),
+            const SizedBox(height: 20),
+            WeeklyFocusPanel(spacetimeId: st.id),
             const SizedBox(height: 20),
             _buildFlowRateChart(context, st, spacetimeProvider),
             const SizedBox(height: 20),

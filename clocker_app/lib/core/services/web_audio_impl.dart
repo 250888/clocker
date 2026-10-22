@@ -41,3 +41,15 @@ Future<void> platformSetNoiseVolume(double volume) async {
     debugPrint('JS set volume error: $e');
   }
 }
+
+/// Web 端优先使用 index.html 里的钟鸣合成（谐波 + 包络，听感比 WAV 更自然）。
+Future<bool> platformPlayChime() async {
+  if (!_jsWhiteNoiseAvailable()) return false;
+  try {
+    final result = js_util.callMethod(html.window, 'playChime', []);
+    return result == true;
+  } catch (e) {
+    debugPrint('JS chime error: $e');
+    return false;
+  }
+}

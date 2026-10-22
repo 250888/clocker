@@ -47,8 +47,9 @@ void main() {
     expect(find.text('时空规则'), findsOneWidget);
     expect(find.text('流 速 与 节 奏'), findsOneWidget);
     expect(find.text('番茄钟时长'), findsOneWidget);
-    expect(find.text('屏幕使用监控'), findsOneWidget);
-    expect(find.text('白噪音'), findsOneWidget);
-    expect(find.text('清除所有本地数据'), findsOneWidget);
+    expect(find.text('提 醒'), findsOneWidget);
+    expect(find.text('通知提醒'), findsOneWidget);
+    expect(find.text('关 于'), findsOneWidget);
+    expect(find.text('CLOCKER · 钟慢自律'), findsOneWidget);
   });
 }

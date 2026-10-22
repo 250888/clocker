@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
-import '../core/constants/app_strings.dart';
 import '../providers/achievement_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/achievement_badge.dart';
@@ -53,54 +52,28 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 22),
-                    _section('监 控 权 限（可 选）'),
-                    _switchRow(
-                      title: '屏幕使用监控',
-                      subtitle: '区分学习与娱乐 APP 时长',
-                      value: settings.settings.enableScreenMonitoring,
-                      onChanged: settings.toggleScreenMonitoring,
-                    ),
-                    _switchRow(
-                      title: '视觉注意力监控',
-                      subtitle: '前置摄像头，全部本地计算',
-                      value: settings.settings.enableCameraMonitoring,
-                      onChanged: settings.toggleCameraMonitoring,
-                    ),
-                    const SizedBox(height: 22),
-                    _section('声 音 与 提 醒'),
+                    _section('提 醒'),
                     _switchRow(
                       title: '通知提醒',
                       subtitle: '截止日预警、每日损失报告',
                       value: settings.settings.enableNotifications,
                       onChanged: settings.toggleNotifications,
                     ),
-                    _switchRow(
-                      title: '音效',
-                      subtitle: '专注完成提示音',
-                      value: settings.settings.enableSoundEffects,
-                      onChanged: settings.toggleSoundEffects,
-                    ),
-                    _switchRow(
-                      title: '白噪音',
-                      subtitle: '与流速同步的沉浸音效',
-                      value: settings.settings.enableWhiteNoise,
-                      onChanged: settings.toggleWhiteNoise,
+                    const SizedBox(height: 12),
+                    const Text(
+                      '摄像头 / 屏幕监控与白噪音在「专注时空」页开关；隐私说明与数据清除在「仪表盘」页底部。',
+                      style: TextStyle(
+                        color: AppColors.textHint,
+                        fontSize: 10.5,
+                        height: 1.7,
+                      ),
                     ),
                     const SizedBox(height: 22),
                     _section('成 就'),
                     _achievements(),
                     const SizedBox(height: 22),
-                    _section('隐 私'),
-                    const Text(
-                      AppStrings.privacyContent,
-                      style: TextStyle(
-                        color: AppColors.textHint,
-                        fontSize: 11,
-                        height: 1.9,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _dangerZone(context, settings),
+                    _section('关 于'),
+                    _about(),
                   ],
                 ),
               );
@@ -169,6 +142,31 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           Switch(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _about() {
+    return _rowShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'CLOCKER · 钟慢自律',
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 13.5),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            '版本 1.3.0 · Flutter 跨平台（Web / Windows / Android）',
+            style: TextStyle(color: AppColors.textHint, fontSize: 10.5),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            '演示：250888.github.io/clocker',
+            style: TextStyle(color: AppColors.textHint, fontSize: 10.5),
+          ),
         ],
       ),
     );
@@ -262,53 +260,4 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _dangerZone(BuildContext context, SettingsProvider settings) {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () => _confirmClearData(context, settings),
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.danger,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: AppColors.hairline),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(999),
-          ),
-        ),
-        child: const Text(
-          '清除所有本地数据',
-          style: TextStyle(fontSize: 12, letterSpacing: 1.6),
-        ),
-      ),
-    );
-  }
-
-  void _confirmClearData(BuildContext context, SettingsProvider settings) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('确认清除数据'),
-        content: const Text('将删除所有时空、任务、专注记录与成就数据，且无法恢复。确定继续吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              settings.clearAllData();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('所有数据已清除')),
-              );
-            },
-            child: const Text(
-              '确认清除',
-              style: TextStyle(color: AppColors.danger),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
