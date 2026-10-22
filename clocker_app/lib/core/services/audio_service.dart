@@ -35,6 +35,33 @@ Uint8List _generateNoisePcmStatic(
   final random = Random();
   final noise = List.generate(totalSamples, (_) => random.nextDouble() * 2 - 1);
 
+  // ── 粉噪声基底（Paul Kellet 滤波器，-3dB/oct 谱）──────────────────
+  // 白噪声每赫兹能量相同，高频刺耳；粉噪声能量随频率递减，
+  // 才是雨/风/篝火/海浪共有的"自然"底色。
+  final pink = Float64List(totalSamples);
+  double pk0 = 0, pk1 = 0, pk2 = 0, pk3 = 0, pk4 = 0, pk5 = 0, pk6 = 0;
+  for (var i = 0; i < totalSamples; i++) {
+    final w = noise[i];
+    pk0 = 0.99886 * pk0 + w * 0.0555179;
+    pk1 = 0.99332 * pk1 + w * 0.0750759;
+    pk2 = 0.96900 * pk2 + w * 0.1538520;
+    pk3 = 0.86650 * pk3 + w * 0.3104856;
+    pk4 = 0.55000 * pk4 + w * 0.5329522;
+    pk5 = -0.7616 * pk5 - w * 0.0168980;
+    pk6 = w * 0.115926;
+    pink[i] = (pk0 + pk1 + pk2 + pk3 + pk4 + pk5 + pk6) * 0.11;
+  }
+
+  // ── 慢速"呼吸"调制（~0.35Hz 与 ~3.5Hz 两层）───────────────────────
+  // 纯静态的循环底噪听起来是"死"的；真实环境的响度一直在缓慢起伏。
+  final env = Float64List(totalSamples);
+  double lfo1 = 0, lfo2 = 0;
+  for (var i = 0; i < totalSamples; i++) {
+    lfo1 += (noise[i] - lfo1) * 0.00008;
+    lfo2 += (noise[i] - lfo2) * 0.0005;
+    env[i] = (0.85 + lfo1 * 20 + lfo2 * 3).clamp(0.55, 1.15);
+  }
+
   final rnd = Random(soundId.hashCode);
   double x1a = 0, x2a = 0, y1a = 0, y2a = 0;
   double x1b = 0, x2b = 0, y1b = 0, y2b = 0;
@@ -91,44 +118,55 @@ Uint8List _generateNoisePcmStatic(
 
 
   for (int i = 0; i < totalSamples; i++) {
-    final x0 = noise[i];
+    final x0 = pink[i];
     double sample = 0;
     switch (soundId) {
       case 'rain':
-        final s1 = biquad('bandpass', 2800, 0.6, x0, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = x0; y2a = y1a; y1a = s1;
-        sample = s1;
+        // 雨幕：粉噪声去掉低频隆隆、再压住残留的高频嘶鸣
+        var s = biquad('highpass', 180, 0.7071, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = x0; y2a = y1a; y1a = s;
+        s = biquad('lowpass', 9000, 0.7071, s, x1b, x2b, y1b, y2b);
+        x2b = x1b; x1b = s; y2b = y1b; y1b = s;
+        sample = s * 1.9;
       case 'fire':
-        final s1 = biquad('lowpass', 480, 1.0, x0, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = x0; y2a = y1a; y1a = s1;
-        sample = biquad('highpass', 60, 0.7071, s1, x1b, x2b, y1b, y2b);
-        x2b = x1b; x1b = s1; y2b = y1b; y1b = sample;
+        // 炉膛：低频为主，几乎无高频
+        var s = biquad('lowpass', 420, 1.0, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = x0; y2a = y1a; y1a = s;
+        s = biquad('lowpass', 420, 1.0, s, x1b, x2b, y1b, y2b);
+        x2b = x1b; x1b = s; y2b = y1b; y1b = s;
+        sample = s * 3.6;
       case 'ocean':
         lfoPhase += 2 * pi / (sampleRate * 8);
-        final modFreq = 700 + sin(lfoPhase) * 260;
-        final s1 = biquad('lowpass', modFreq, 0.8, x0, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = x0; y2a = y1a; y1a = s1;
-        sample = s1 * (0.55 + 0.45 * sin(lfoPhase * 2));
+        final modFreq = 600 + sin(lfoPhase) * 320;
+        var s = biquad('lowpass', modFreq, 0.8, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = x0; y2a = y1a; y1a = s;
+        s = biquad('lowpass', 1600, 0.7071, s, x1b, x2b, y1b, y2b);
+        x2b = x1b; x1b = s; y2b = y1b; y1b = s;
+        sample = s * (2.2 + 1.4 * sin(lfoPhase * 2));
       case 'wind':
         lfoPhase += 2 * pi / (sampleRate * 11);
         gustPhase += 2 * pi / (sampleRate * 19);
-        final modFreq = 420 + sin(lfoPhase) * 180;
-        final s1 = biquad('bandpass', modFreq, 0.35, x0, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = x0; y2a = y1a; y1a = s1;
-        sample = s1 * (0.5 + 0.5 * sin(gustPhase));
+        final modFreq = 380 + sin(lfoPhase) * 200;
+        var s = biquad('bandpass', modFreq, 0.30, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = x0; y2a = y1a; y1a = s;
+        s = biquad('lowpass', 2400, 0.7071, s, x1b, x2b, y1b, y2b);
+        x2b = x1b; x1b = s; y2b = y1b; y1b = s;
+        sample = s * (2.6 + 1.6 * sin(gustPhase));
       case 'forest':
-        final s1 = biquad('bandpass', 6500, 2.0, x0, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = x0; y2a = y1a; y1a = s1;
-        sample = s1 * 0.8;
+        var s = biquad('highpass', 400, 0.7071, x0, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = x0; y2a = y1a; y1a = s;
+        s = biquad('lowpass', 6000, 0.7071, s, x1b, x2b, y1b, y2b);
+        x2b = x1b; x1b = s; y2b = y1b; y1b = s;
+        sample = s * 1.6;
       case 'cafe':
         lfoPhase += (x0 - lfoPhase) * 0.02;
-        final s1 = biquad('lowpass', 900, 0.7071, lfoPhase, x1a, x2a, y1a, y2a);
-        x2a = x1a; x1a = lfoPhase; y2a = y1a; y1a = s1;
-        sample = s1 * 3.0;
+        var s = biquad('lowpass', 700, 0.7071, lfoPhase, x1a, x2a, y1a, y2a);
+        x2a = x1a; x1a = lfoPhase; y2a = y1a; y1a = s;
+        sample = s * 9.0;
       default:
         sample = x0 * 0.1;
     }
-    pcm[i] = sample * volume;
+    pcm[i] = sample * env[i] * volume;
   }
 
   void addDroplet(int at, double amp) {

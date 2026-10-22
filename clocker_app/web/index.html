@@ -167,35 +167,58 @@
       return buf;
     }
     // ── 程序合成环境音：床层 + 纹理（水滴/噼啪/鸟鸣/杯响），全部烘进一个可循环缓冲 ──
+    // ── 环境音：粉噪声基底（1/f 谱）+ 慢速呼吸调制 + 纹理事件 ──
+    // 白噪声每赫兹能量相同 → 高频刺耳；粉噪声能量随频率递减，才是自然底色。
     function _buildNoiseBuffer(ctx, sid, seconds){
       var sr=ctx.sampleRate, len=Math.floor(sr*(seconds||8));
       var buf=ctx.createBuffer(2, len, sr);
       for(var ch=0; ch<2; ch++){
         var d=buf.getChannelData(ch);
-        // 床层：双二阶滤波
+        // ① 粉噪声（Paul Kellet 滤波器）
+        var pink=new Float32Array(len);
+        var p0=0,p1=0,p2=0,p3=0,p4=0,p5=0,p6=0;
+        for(var i=0;i<len;i++){
+          var w=Math.random()*2-1;
+          p0=0.99886*p0+w*0.0555179;
+          p1=0.99332*p1+w*0.0750759;
+          p2=0.96900*p2+w*0.1538520;
+          p3=0.86650*p3+w*0.3104856;
+          p4=0.55000*p4+w*0.5329522;
+          p5=-0.7616*p5-w*0.0168980;
+          p6=w*0.115926;
+          pink[i]=(p0+p1+p2+p3+p4+p5+p6)*0.11;
+        }
+        // ② 慢速呼吸调制（~0.35Hz + ~3.5Hz）
+        var l1=0,l2=0,env=new Float32Array(len);
+        for(var i2=0;i2<len;i2++){
+          l1+=(Math.random()*2-1-l1)*0.00008;
+          l2+=(Math.random()*2-1-l2)*0.0005;
+          env[i2]=Math.max(0.55, Math.min(1.15, 0.85+l1*20+l2*3));
+        }
+        // ③ 双二阶滤波
         var x1=0,x2=0,y1=0,y2=0,lfo=0,gust=0;
-        function bq(type,freq,Q,x0){
+        function bq(type,freq,Q,x0v){
           var w0=2*Math.PI*freq/sr, a=Math.sin(w0)/(2*Q);
           var b0,b1,b2,a0,a1,a2;
           if(type==='lowpass'){b0=(1-Math.cos(w0))/2;b1=1-Math.cos(w0);b2=b0;a0=1+a;a1=-2*Math.cos(w0);a2=1-a;}
           else if(type==='highpass'){b0=(1+Math.cos(w0))/2;b1=-(1+Math.cos(w0));b2=b0;a0=1+a;a1=-2*Math.cos(w0);a2=1-a;}
           else{b0=a;b1=0;b2=-a;a0=1+a;a1=-2*Math.cos(w0);a2=1-a;}
-          var y=(b0/a0)*x0+(b1/a0)*x1+(b2/a0)*x2-(a1/a0)*y1-(a2/a0)*y2;
-          x2=x1;x1=x0;y2=y1;y1=y;
+          var y=(b0/a0)*x0v+(b1/a0)*x1+(b2/a0)*x2-(a1/a0)*y1-(a2/a0)*y2;
+          x2=x1;x1=x0v;y2=y1;y1=y;
           return y;
         }
-        for(var i=0;i<len;i++){
-          var t=i/sr, x=Math.random()*2-1, s=0;
-          if(sid==='rain'){ s=bq('bandpass',2800,0.6,x); }
-          else if(sid==='fire'){ var s1=bq('lowpass',480,1.0,x); s=bq('highpass',60,0.7071,s1); }
-          else if(sid==='ocean'){ lfo+=2*Math.PI/(sr*8); s=bq('lowpass',700+Math.sin(lfo)*260,0.8,x)*(0.55+0.45*Math.sin(lfo*2)); }
-          else if(sid==='wind'){ lfo+=2*Math.PI/(sr*11); gust+=2*Math.PI/(sr*19); s=bq('bandpass',420+Math.sin(lfo)*180,0.35,x)*(0.5+0.5*Math.sin(gust)); }
-          else if(sid==='forest'){ s=bq('bandpass',6500,2.0,x)*0.8; }
-          else if(sid==='cafe'){ lfo+=(x-lfo)*0.02; s=bq('lowpass',900,0.7071,lfo)*3.0; }
-          else { s=x*0.1; }
-          d[i]=s;
+        for(var i3=0;i3<len;i3++){
+          var x0v=pink[i3], s=0;
+          if(sid==='rain'){ s=bq('highpass',180,0.7071,x0v); s=bq('lowpass',9000,0.7071,s); s*=1.9; }
+          else if(sid==='fire'){ s=bq('lowpass',420,1.0,x0v); s=bq('lowpass',420,1.0,s); s*=3.6; }
+          else if(sid==='ocean'){ lfo+=2*Math.PI/(sr*8); s=bq('lowpass',600+Math.sin(lfo)*320,0.8,x0v); s=bq('lowpass',1600,0.7071,s); s*=(2.2+1.4*Math.sin(lfo*2)); }
+          else if(sid==='wind'){ lfo+=2*Math.PI/(sr*11); gust+=2*Math.PI/(sr*19); s=bq('bandpass',380+Math.sin(lfo)*200,0.30,x0v); s=bq('lowpass',2400,0.7071,s); s*=(2.6+1.6*Math.sin(gust)); }
+          else if(sid==='forest'){ s=bq('highpass',400,0.7071,x0v); s=bq('lowpass',6000,0.7071,s); s*=1.6; }
+          else if(sid==='cafe'){ lfo+=(x0v-lfo)*0.02; s=bq('lowpass',700,0.7071,lfo); s*=9.0; }
+          else { s=x0v*0.1; }
+          d[i3]=s*env[i3];
         }
-        // 纹理：按需撒事件
+        // ④ 纹理事件
         var rnd=function(){return Math.random();};
         var pos=0;
         while(pos<len){
