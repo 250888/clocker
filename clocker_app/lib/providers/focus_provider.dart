@@ -95,12 +95,19 @@ class FocusProvider extends ChangeNotifier {
   }
 
   void configure({
+    int? pomodoroMinutes,
     bool? enableWhiteNoise,
     bool? enableScreenMonitoring,
     bool? enableAttentionMonitoring,
     bool? enableCamera,
     String? selectedNoise,
   }) {
+    if (pomodoroMinutes != null && pomodoroMinutes > 0) {
+      // 规则页的「番茄钟时长」即专注默认时长；空闲时才改，避免打断进行中的专注
+      if (!_isRunning) {
+        _targetDuration = Duration(minutes: pomodoroMinutes);
+      }
+    }
     if (enableWhiteNoise != null) _enableWhiteNoise = enableWhiteNoise;
     if (enableScreenMonitoring != null) {
       _enableScreenMonitoring = enableScreenMonitoring;

@@ -80,6 +80,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setDefaultAdvanceDays(int days) async {
+    _settings = _settings.copyWith(defaultAdvanceDays: days);
+    await _db.saveSettings(_settings);
+    notifyListeners();
+  }
+
   Future<void> setDefaultFlowMode(FlowMode mode) async {
     _settings = _settings.copyWith(defaultFlowMode: mode);
     await _db.saveSettings(_settings);

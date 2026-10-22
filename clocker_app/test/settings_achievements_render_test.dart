@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 
 import 'package:clocker/core/constants/app_theme.dart';
 import 'package:clocker/providers/achievement_provider.dart';
+import 'package:clocker/providers/focus_provider.dart';
 import 'package:clocker/providers/settings_provider.dart';
+import 'package:clocker/providers/spacetime_provider.dart';
 import 'package:clocker/screens/settings_screen.dart';
 
 import 'test_support.dart';
@@ -22,12 +24,15 @@ void main() {
   testWidgets('规则页成就区：未解锁徽章显示条件文案', (tester) async {
     late SettingsProvider settings;
     late AchievementProvider achievements;
+    final focus = FocusProvider();
+    final spacetimes = SpacetimeProvider();
 
     await tester.runAsync(() async {
       settings = SettingsProvider();
       await settings.loadSettings();
       achievements = AchievementProvider();
       await achievements.loadAchievements();
+      await spacetimes.loadSpacetimes();
     });
 
     await tester.pumpWidget(
@@ -35,6 +40,8 @@ void main() {
         providers: [
           ChangeNotifierProvider.value(value: settings),
           ChangeNotifierProvider.value(value: achievements),
+          ChangeNotifierProvider.value(value: focus),
+          ChangeNotifierProvider.value(value: spacetimes),
         ],
         child: MaterialApp(
           theme: AppTheme.darkTheme,

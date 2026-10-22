@@ -197,50 +197,148 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         Text('专注时长', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Row(
-          children: _durations.map((item) {
-            final isSelected = _targetDuration == item['duration'];
-            return Expanded(
+          children: [
+            ..._durations.map((item) {
+              final isSelected = _targetDuration == item['duration'];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(
+                      () => _targetDuration = item['duration'] as Duration,
+                    );
+                    context.read<FocusProvider>().setTargetDuration(
+                      _targetDuration,
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withValues(alpha: 0.2)
+                          : AppColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(10),
+                      border: isSelected
+                          ? Border.all(color: AppColors.primary)
+                          : null,
+                    ),
+                    child: Text(
+                      item['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textHint,
+                        fontSize: 12,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+            // 自定义时长：非预设值时高亮，显示当前分钟数
+            Expanded(
               child: GestureDetector(
-                onTap: () {
-                  setState(
-                    () => _targetDuration = item['duration'] as Duration,
-                  );
-                  context.read<FocusProvider>().setTargetDuration(
-                    _targetDuration,
-                  );
-                },
+                onTap: _showCustomDurationDialog,
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected
+                    color: _isCustomDuration
                         ? AppColors.primary.withValues(alpha: 0.2)
                         : AppColors.surfaceLight,
                     borderRadius: BorderRadius.circular(10),
-                    border: isSelected
+                    border: _isCustomDuration
                         ? Border.all(color: AppColors.primary)
                         : null,
                   ),
-                  child: Text(
-                    item['label'] as String,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textHint,
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 12,
+                        color: _isCustomDuration
+                            ? AppColors.primary
+                            : AppColors.textHint,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        _isCustomDuration
+                            ? '${_targetDuration.inMinutes}m'
+                            : '自定义',
+                        style: TextStyle(
+                          color: _isCustomDuration
+                              ? AppColors.primary
+                              : AppColors.textHint,
+                          fontSize: 12,
+                          fontWeight: _isCustomDuration
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  /// 当前时长不属于预设值 → 视为「自定义」。
+  bool get _isCustomDuration =>
+      !_durations.any((item) => item['duration'] == _targetDuration);
+
+  /// 自定义专注时长（1–600 分钟）。
+  Future<void> _showCustomDurationDialog() async {
+    final controller = TextEditingController(
+      text: '${_targetDuration.inMinutes}',
+    );
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('自定义专注时长'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: '分钟',
+            hintText: '1 – 600',
+          ),
+          onSubmitted: (v) {
+            final n = int.tryParse(v.trim());
+            if (n != null && n >= 1 && n <= 600) Navigator.pop(dialogContext, n);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final n = int.tryParse(controller.text.trim());
+              if (n != null && n >= 1 && n <= 600) {
+                Navigator.pop(dialogContext, n);
+              }
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _targetDuration = Duration(minutes: result));
+      context.read<FocusProvider>().setTargetDuration(_targetDuration);
+    }
   }
 
   Widget _buildModeGrid() {

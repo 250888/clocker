@@ -100,6 +100,7 @@ class _AppEntryState extends State<_AppEntry> {
       }
 
       focusProvider.configure(
+        pomodoroMinutes: settingsProvider.settings.pomodoroDuration,
         enableWhiteNoise: settingsProvider.settings.enableWhiteNoise,
         enableScreenMonitoring:
             settingsProvider.settings.enableScreenMonitoring,
